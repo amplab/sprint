@@ -1,0 +1,3 @@
+[submodule "external/ds-lib"]
+	path = external/ds-lib
+	url = https://github.com/anuragkh/ds-lib.git

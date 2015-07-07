@@ -1,0 +1,68 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+lib/*
+
+# Executables
+*.exe
+*.out
+*.app
+bin/*
+
+# Directories
+build
+scratch
+dat
+log
+res
+
+# Eclipse files
+.settings
+.cproject
+.project
+
+# Netbeans files
+nbproject
+
+# generic ignores
+*.deps
+*.dirstamp
+*.libs
+*.log
+*.trs
+*.suo
+*.pyc
+*.cache
+*.user
+*.ipch
+*.sdf
+*.jar
+*.exe
+*.dll
+*_ReSharper*
+*.opensdf
+*.swp
+*.hi
+*~
+.DS_Store
+
