@@ -4,7 +4,7 @@
 #include <set>
 
 #include "regex_types.h"
-#include "suffix_tree.h"
+#include "text_index.h"
 
 namespace pull_star {
 
@@ -14,7 +14,7 @@ class RegularExpression {
   typedef std::set<OffsetLength> RegExResults;
   typedef RegExResults::iterator RegExResultsIterator;
 
-  RegularExpression(std::string regex, dsl::SuffixTree *text_idx);
+  RegularExpression(std::string regex, dsl::TextIndex *text_idx);
 
   void execute();
   void subQuery(RegExResults &result, RegEx *r);
@@ -29,7 +29,7 @@ class RegularExpression {
 
   std::string regex_;
   std::vector<RegEx *> sub_expressions_;
-  dsl::SuffixTree *text_idx_;
+  dsl::TextIndex *text_idx_;
 
   RegExResults r_results;
 };

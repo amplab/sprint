@@ -1,6 +1,6 @@
 #include "regex_executor.h"
 
-pull_star::RegExExecutor::RegExExecutor(dsl::SuffixTree *text_idx,
+pull_star::RegExExecutor::RegExExecutor(dsl::TextIndex *text_idx,
                                         RegEx *regex) {
   text_idx_ = text_idx;
   regex_ = regex;
@@ -13,7 +13,7 @@ void pull_star::RegExExecutor::getResults(RegExResult& result) {
   result = final_result_;
 }
 
-pull_star::BBExecutor::BBExecutor(dsl::SuffixTree *text_idx,
+pull_star::BBExecutor::BBExecutor(dsl::TextIndex *text_idx,
                                   pull_star::RegEx* regex)
     : RegExExecutor(text_idx, regex) {
 }
@@ -35,7 +35,15 @@ void pull_star::BBExecutor::compute(RegExResult& result, RegEx* regex) {
         }
         case RegExPrimitiveType::Range:
         case RegExPrimitiveType::Dot: {
-          // TODO:
+          std::string primitive = ((RegExPrimitive *) regex)->getPrimitive();
+          if (primitive == '.') {
+            primitive =
+                " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+          }
+          for (auto c : primitive) {
+            RegExPrimitive char_primitive(std::string(1, c));
+            regexMgram(result, &char_primitive);
+          }
           break;
         }
       }
@@ -103,11 +111,9 @@ void pull_star::BBExecutor::regexRepeat(RegExResult& repeat_result,
                                         RegExRepeatType repeat_type, int min,
                                         int max) {
   switch (repeat_type) {
-    case RegExRepeatType::ZeroOrMore: {
-      // TODO: Support
-      break;
-    }
+    case RegExRepeatType::ZeroOrMore:
     case RegExRepeatType::OneOrMore: {
+      // FIXME: .* is equivalent to .+ for now
       size_t concat_size;
       RegExResult concat_res;
       repeat_result = concat_res = internal;
@@ -116,17 +122,47 @@ void pull_star::BBExecutor::regexRepeat(RegExResult& repeat_result,
         RegExResult concat_temp_res;
         regexConcat(concat_temp_res, concat_res, internal);
         concat_res = concat_temp_res;
+
+        concat_size = concat_res.size();
+
+        RegExResult repeat_temp_res;
+        regexUnion(repeat_temp_res, repeat_result, concat_res);
+        repeat_result = repeat_temp_res;
+      } while (concat_size);
+      break;
+    }
+    case RegExRepeatType::MinToMax: {
+      size_t concat_size;
+      RegExResult concat_res, min_res;
+      min_res = concat_res = internal;
+      size_t num_repeats = 1;
+
+      // Get to min repeats
+      while (num_repeats < min) {
+        RegExResult concat_temp_res;
+        regexConcat(concat_temp_res, concat_res, internal);
+        concat_res = concat_temp_res;
+
+        num_repeats++;
+
+        if (concat_res.size() == 0)
+          return;
+      }
+
+      do {
+        RegExResult concat_temp_res;
+        regexConcat(concat_temp_res, concat_res, internal);
+        concat_res = concat_temp_res;
+
         concat_size = concat_res.size();
 
         RegExResult repeat_temp_res;
         regexUnion(repeat_temp_res, repeat_result, concat_res);
         repeat_result = repeat_temp_res;
 
-      } while (concat_size);
-      break;
-    }
-    case RegExRepeatType::MinToMax: {
-      // TODO: Support
+        num_repeats++;
+      } while (concat_size && num_repeats < max);
+
       break;
     }
   }

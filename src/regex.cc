@@ -8,7 +8,7 @@
 #define MIN(a, b) ((a) < (b)) ? (a) : (b)
 
 pull_star::RegularExpression::RegularExpression(std::string regex,
-                                                dsl::SuffixTree *text_idx) {
+                                                dsl::TextIndex *text_idx) {
   this->regex_ = regex;
   this->text_idx_ = text_idx;
   parse();

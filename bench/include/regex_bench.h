@@ -14,7 +14,7 @@ class RegExBench : public dsl_bench::Benchmark {
                   const std::string& result_path);
 
  private:
-  dsl::SuffixTree *text_idx_;
+  dsl::TextIndex *text_idx_;
 };
 
 }

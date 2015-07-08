@@ -3,33 +3,33 @@
 
 #include <set>
 
-#include "suffix_tree.h"
+#include "text_index.h"
 #include "regex_types.h"
 
 namespace pull_star {
 class RegExExecutor {
- protected:
+ public:
   typedef std::pair<size_t, size_t> OffsetLength;
   typedef std::set<OffsetLength> RegExResult;
   typedef RegExResult::iterator RegExResultIterator;
 
-  dsl::SuffixTree *text_idx_;
-  RegEx *regex_;
-  std::set<OffsetLength> final_result_;
-
- public:
-  RegExExecutor(dsl::SuffixTree *text_idx, pull_star::RegEx *regex);
+  RegExExecutor(dsl::TextIndex *text_idx, pull_star::RegEx *regex);
 
   virtual ~RegExExecutor();
 
   virtual void execute() = 0;
 
   virtual void getResults(RegExResult &result);
+
+ protected:
+  dsl::TextIndex *text_idx_;
+  RegEx *regex_;
+  std::set<OffsetLength> final_result_;
 };
 
 class BBExecutor : public RegExExecutor {
  public:
-  BBExecutor(dsl::SuffixTree *text_idx, pull_star::RegEx* regex);
+  BBExecutor(dsl::TextIndex *text_idx, pull_star::RegEx* regex);
 
   void execute();
  private:

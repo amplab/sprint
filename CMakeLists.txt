@@ -7,14 +7,7 @@ file(MAKE_DIRECTORY ${LIBRARY_OUTPUT_PATH})
 
 set(INCLUDE include)
 set(EXTERNAL_INCLUDE external/ds-lib/include)
-set(SOURCE_FILES
-    include/regex.h
-    include/regex_executor.h
-    include/regex_parser.h
-    include/regex_types.h
-    src/regex.cc
-    src/regex_executor.cc
-    src/regex_parser.cc)
+file(GLOB SOURCE_FILES src/*.cc)
 include_directories(${INCLUDE} ${EXTERNAL_INCLUDE})
 add_library(pullstar STATIC ${SOURCE_FILES})
 set_target_properties(pullstar PROPERTIES LINKER_LANGUAGE CXX)
