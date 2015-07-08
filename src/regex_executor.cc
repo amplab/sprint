@@ -35,7 +35,7 @@ void pull_star::BBExecutor::compute(RegExResult& result, RegEx* regex) {
         }
         case RegExPrimitiveType::Range:
         case RegExPrimitiveType::Dot: {
-          // TODO
+          // TODO:
           break;
         }
       }
