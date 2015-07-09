@@ -6,15 +6,24 @@
 
 #include "regex.h"
 #include "suffix_tree.h"
+#include "index/compressed_suffix_tree.h"
 
 pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
-                                        bool construct)
+                                        bool construct, int data_structure)
     : dsl_bench::Benchmark() {
   std::ifstream input_stream(input_file);
   if (construct) {
     const std::string input_text((std::istreambuf_iterator<char>(input_stream)),
                                  std::istreambuf_iterator<char>());
-    text_idx_ = new dsl::SuffixTree(input_text);
+
+    if (data_structure == 0) {
+      text_idx_ = new dsl::SuffixTree(input_text);
+    } else if (data_structure == 1) {
+      text_idx_ = new dsl::CompressedSuffixTree(input_text);
+    } else {
+      fprintf(stderr, "Data structure %d not supported yet.\n", data_structure);
+      exit(0);
+    }
 
     // Serialize to disk for future use.
     std::ofstream out(input_file + ".st");
@@ -46,12 +55,12 @@ void pull_star_bench::RegExBench::benchRegex(const std::string& query_file,
 void print_usage(char *exec) {
   fprintf(
       stderr,
-      "Usage: %s [-m mode] [-t type] [-q query_file] [-r res_file] [file]\n",
+      "Usage: %s [-m mode] [-t type] [-q query_file] [-r res_file] [-d data_structure] [file]\n",
       exec);
 }
 
 int main(int argc, char **argv) {
-  if (argc < 2 || argc > 10) {
+  if (argc < 2 || argc > 12) {
     print_usage(argv[0]);
     return -1;
   }
@@ -61,8 +70,9 @@ int main(int argc, char **argv) {
   std::string type = "latency-regex";
   std::string query_file = "queries.txt";
   std::string res_file = "res.txt";
+  int data_structure = 0;
 
-  while ((c = getopt(argc, argv, "m:t:q:r:")) != -1) {
+  while ((c = getopt(argc, argv, "m:t:q:r:d:")) != -1) {
     switch (c) {
       case 'm': {
         construct = atoi(optarg);
@@ -80,6 +90,10 @@ int main(int argc, char **argv) {
         res_file = std::string(optarg);
         break;
       }
+      case 'd': {
+        data_structure = atoi(optarg);
+        break;
+      }
       default: {
         fprintf(stderr, "Unsupported option %c.\n", (char) c);
         exit(0);
@@ -93,7 +107,7 @@ int main(int argc, char **argv) {
   }
 
   std::string input_file = std::string(argv[optind]);
-  pull_star_bench::RegExBench bench(input_file, construct);
+  pull_star_bench::RegExBench bench(input_file, construct, data_structure);
 
   if (type == "latency-regex") {
     bench.benchRegex(query_file, res_file);

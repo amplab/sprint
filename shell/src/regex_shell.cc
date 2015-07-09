@@ -7,28 +7,33 @@
 #include "regex.h"
 #include "text_index.h"
 #include "suffix_tree.h"
+#include "index/compressed_suffix_tree.h"
 #include "benchmark.h"
 
 void print_usage(char *exec) {
   fprintf(
-      stderr,
-      "Usage: %s [-m mode] [file]\n",
-      exec);
+  stderr,
+          "Usage: %s [-m mode] [-d data-structure] [file]\n", exec);
 }
 
 int main(int argc, char **argv) {
-  if (argc < 2 || argc > 4) {
+  if (argc < 2 || argc > 6) {
     print_usage(argv[0]);
     return -1;
   }
 
   int c;
   bool construct = true;
+  int data_structure = 0;
 
-  while ((c = getopt(argc, argv, "m:")) != -1) {
+  while ((c = getopt(argc, argv, "m:d:")) != -1) {
     switch (c) {
       case 'm': {
         construct = atoi(optarg);
+        break;
+      }
+      case 'd': {
+        data_structure = atoi(optarg);
         break;
       }
       default: {
@@ -49,7 +54,15 @@ int main(int argc, char **argv) {
   if (construct) {
     const std::string input_text((std::istreambuf_iterator<char>(input_stream)),
                                  std::istreambuf_iterator<char>());
-    text_idx_ = new dsl::SuffixTree(input_text);
+
+    if (data_structure == 0) {
+      text_idx_ = new dsl::SuffixTree(input_text);
+    } else if (data_structure == 1) {
+      text_idx_ = new dsl::CompressedSuffixTree(input_text);
+    } else {
+      fprintf(stderr, "Data structure %d not supported yet.\n", data_structure);
+      exit(0);
+    }
 
     // Serialize to disk for future use.
     std::ofstream out(input_file + ".st");
@@ -61,7 +74,7 @@ int main(int argc, char **argv) {
   }
   input_stream.close();
 
-  while(true) {
+  while (true) {
     std::string query;
     std::cout << "rxshell> ";
     std::cin >> query;

@@ -8,7 +8,7 @@ namespace pull_star_bench {
 
 class RegExBench : public dsl_bench::Benchmark {
  public:
-  RegExBench(const std::string& input_file, bool construct);
+  RegExBench(const std::string& input_file, bool construct, int data_structure);
 
   void benchRegex(const std::string& query_file,
                   const std::string& result_path);

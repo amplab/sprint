@@ -9,7 +9,7 @@ file(MAKE_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 set(INCLUDE include/)
 set(EXTERNAL_INCLUDE ../external/ds-lib/bench/include)
-file(GLOB SOURCE_FILES src/*.cc)
+file(GLOB_RECURSE SOURCE_FILES src/*.cc)
 include_directories(${INCLUDE} ${EXTERNAL_INCLUDE})
 add_executable(rxbench ${SOURCE_FILES})
 target_link_libraries(rxbench pullstar)
