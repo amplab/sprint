@@ -15,3 +15,4 @@ target_link_libraries(pullstar ds)
 
 add_subdirectory(external/ds-lib)
 add_subdirectory(bench)
+add_subdirectory(shell)

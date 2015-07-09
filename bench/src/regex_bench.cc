@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include "regex.h"
+#include "suffix_tree.h"
 
 pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
                                         bool construct)
@@ -50,7 +51,7 @@ void print_usage(char *exec) {
 }
 
 int main(int argc, char **argv) {
-  if (argc < 2 || argc > 6) {
+  if (argc < 2 || argc > 10) {
     print_usage(argv[0]);
     return -1;
   }

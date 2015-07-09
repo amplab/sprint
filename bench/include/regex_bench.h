@@ -2,7 +2,7 @@
 #define PULL_STAR_BENCH_REGEX_BENCH_H_
 
 #include "benchmark.h"
-#include "suffix_tree.h"
+#include "text_index.h"
 
 namespace pull_star_bench {
 

@@ -36,7 +36,7 @@ void pull_star::BBExecutor::compute(RegExResult& result, RegEx* regex) {
         case RegExPrimitiveType::Range:
         case RegExPrimitiveType::Dot: {
           std::string primitive = ((RegExPrimitive *) regex)->getPrimitive();
-          if (primitive == '.') {
+          if (primitive == ".") {
             primitive =
                 " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
           }

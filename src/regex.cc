@@ -56,7 +56,7 @@ void pull_star::RegularExpression::explain() {
   fprintf(stderr, "***");
   for (auto subexp : sub_expressions_) {
     explainSubExpression(subexp);
-    fprintf(stderr, "***");
+    fprintf(stderr, "***\n");
   }
 }
 
@@ -66,12 +66,12 @@ void pull_star::RegularExpression::showResults(size_t limit) {
   limit = MIN(limit, r_results.size());
   RegExResultsIterator it;
   size_t i;
-  fprintf(stderr, "Showing %zu of %zu results.\n", limit, r_results.size());
-  fprintf(stderr, "{");
+  fprintf(stdout, "Showing %zu of %zu results.\n", limit, r_results.size());
+  fprintf(stdout, "{");
   for (it = r_results.begin(), i = 0; i < limit; i++, it++) {
-    fprintf(stderr, "%zu => %zu, ", it->first, it->second);
+    fprintf(stdout, "%zu => %zu, ", it->first, it->second);
   }
-  fprintf(stderr, "...}\n");
+  fprintf(stdout, "...}\n");
 }
 
 void pull_star::RegularExpression::getResults(RegExResults &results) {
