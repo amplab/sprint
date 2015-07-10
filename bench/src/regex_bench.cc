@@ -6,7 +6,7 @@
 
 #include "regex.h"
 #include "suffix_tree.h"
-#include "index/compressed_suffix_tree.h"
+#include "compressed_suffix_tree.h"
 
 pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
                                         bool construct, int data_structure,

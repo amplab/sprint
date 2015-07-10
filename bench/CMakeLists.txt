@@ -8,7 +8,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 file(MAKE_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
 set(INCLUDE include/)
-set(EXTERNAL_INCLUDE ../external/ds-lib/bench/include)
+set(EXTERNAL_INCLUDE ../external/ds-lib/bench/include ../external/ds-lib/external/cst_v_1_1)
 file(GLOB_RECURSE SOURCE_FILES src/*.cc)
 include_directories(${INCLUDE} ${EXTERNAL_INCLUDE})
 add_executable(rxbench ${SOURCE_FILES})

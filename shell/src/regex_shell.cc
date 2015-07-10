@@ -7,7 +7,7 @@
 #include "regex.h"
 #include "text_index.h"
 #include "suffix_tree.h"
-#include "index/compressed_suffix_tree.h"
+#include "compressed_suffix_tree.h"
 #include "benchmark.h"
 
 void print_usage(char *exec) {
