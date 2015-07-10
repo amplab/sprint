@@ -9,31 +9,44 @@
 #include "index/compressed_suffix_tree.h"
 
 pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
-                                        bool construct, int data_structure)
+                                        bool construct, int data_structure,
+                                        int executor_type)
     : dsl_bench::Benchmark() {
-  std::ifstream input_stream(input_file);
   if (construct) {
+    std::ifstream input_stream(input_file);
     const std::string input_text((std::istreambuf_iterator<char>(input_stream)),
                                  std::istreambuf_iterator<char>());
-
+    input_stream.close();
     if (data_structure == 0) {
       text_idx_ = new dsl::SuffixTree(input_text);
+
+      // Serialize to disk for future use.
+      std::ofstream out(input_file + ".st");
+      text_idx_->serialize(out);
+      out.close();
     } else if (data_structure == 1) {
-      text_idx_ = new dsl::CompressedSuffixTree(input_text);
+      text_idx_ = new dsl::CompressedSuffixTree(input_text, input_file);
     } else {
       fprintf(stderr, "Data structure %d not supported yet.\n", data_structure);
       exit(0);
     }
-
-    // Serialize to disk for future use.
-    std::ofstream out(input_file + ".st");
-    text_idx_->serialize(out);
-    out.close();
   } else {
-    text_idx_ = new dsl::SuffixTree();
-    text_idx_->deserialize(input_stream);
+    if (data_structure == 0) {
+      std::ifstream input_stream(input_file + ".st");
+      text_idx_ = new dsl::SuffixTree();
+      text_idx_->deserialize(input_stream);
+      input_stream.close();
+    } else if (data_structure == 1) {
+      std::ifstream input_stream(input_file);
+      const std::string input_text(
+          (std::istreambuf_iterator<char>(input_stream)),
+          std::istreambuf_iterator<char>());
+      text_idx_ = new dsl::CompressedSuffixTree(input_text, input_file, false);
+      input_stream.close();
+    }
   }
-  input_stream.close();
+  executor_type_ =
+      static_cast<pull_star::RegularExpression::ExecutorType>(executor_type);
 }
 
 void pull_star_bench::RegExBench::benchRegex(const std::string& query_file,
@@ -41,7 +54,7 @@ void pull_star_bench::RegExBench::benchRegex(const std::string& query_file,
   std::vector<std::string> queries = readQueryFile(query_file);
   std::ofstream result_stream(result_path);
   for (auto query : queries) {
-    pull_star::RegularExpression regex(query, text_idx_);
+    pull_star::RegularExpression regex(query, text_idx_, executor_type_);
     std::set<std::pair<size_t, size_t>> results;
     time_t start = get_timestamp();
     regex.execute();
@@ -55,12 +68,12 @@ void pull_star_bench::RegExBench::benchRegex(const std::string& query_file,
 void print_usage(char *exec) {
   fprintf(
       stderr,
-      "Usage: %s [-m mode] [-t type] [-q query_file] [-r res_file] [-d data_structure] [file]\n",
+      "Usage: %s [-m mode] [-t type] [-q query_file] [-r res_file] [-d data_structure] [-e executor_type] [file]\n",
       exec);
 }
 
 int main(int argc, char **argv) {
-  if (argc < 2 || argc > 12) {
+  if (argc < 2 || argc > 14) {
     print_usage(argv[0]);
     return -1;
   }
@@ -71,8 +84,9 @@ int main(int argc, char **argv) {
   std::string query_file = "queries.txt";
   std::string res_file = "res.txt";
   int data_structure = 0;
+  int executor_type = 1;
 
-  while ((c = getopt(argc, argv, "m:t:q:r:d:")) != -1) {
+  while ((c = getopt(argc, argv, "m:t:q:r:d:e:")) != -1) {
     switch (c) {
       case 'm': {
         construct = atoi(optarg);
@@ -94,6 +108,10 @@ int main(int argc, char **argv) {
         data_structure = atoi(optarg);
         break;
       }
+      case 'e': {
+        executor_type = atoi(optarg);
+        break;
+      }
       default: {
         fprintf(stderr, "Unsupported option %c.\n", (char) c);
         exit(0);
@@ -107,7 +125,8 @@ int main(int argc, char **argv) {
   }
 
   std::string input_file = std::string(argv[optind]);
-  pull_star_bench::RegExBench bench(input_file, construct, data_structure);
+  pull_star_bench::RegExBench bench(input_file, construct, data_structure,
+                                    executor_type);
 
   if (type == "latency-regex") {
     bench.benchRegex(query_file, res_file);

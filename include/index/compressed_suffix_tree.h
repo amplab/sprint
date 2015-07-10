@@ -9,10 +9,11 @@ namespace dsl {
 class CompressedSuffixTree : public dsl::TextIndex {
  public:
   CompressedSuffixTree();
-  CompressedSuffixTree(const std::string &input);
+  CompressedSuffixTree(const std::string &input, const std::string& input_path, bool construct = true);
 
   std::vector<int64_t> search(const std::string& query) const;
   int64_t count(const std::string& query) const;
+  bool contains(const std::string& query) const;
 
   size_t serialize(std::ostream& out);
   size_t deserialize(std::istream& in);

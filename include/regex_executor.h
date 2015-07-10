@@ -43,6 +43,39 @@ class BBExecutor : public RegExExecutor {
                    RegExRepeatType repeat_type, int min = -1, int max = -1);
 };
 
+class PSExecutor : public RegExExecutor {
+
+ public:
+  typedef std::set<std::string> TokenSet;
+  typedef std::string Token;
+  typedef TokenSet::iterator ResultIterator;
+
+  PSExecutor(dsl::TextIndex* s_core, RegEx *re);
+
+  void execute();
+
+ private:
+  void compute(TokenSet &tokens, RegEx *regex);
+
+  void regexUnion(TokenSet &union_tokens, TokenSet first, TokenSet second);
+
+  void regexConcat(TokenSet &concat_tokens, RegEx *regex, Token left_token);
+
+  void regexRepeatOneOrMore(TokenSet &repeat_tokens, RegEx *regex);
+
+  void regexRepeatOneOrMore(TokenSet &repeat_tokens, RegEx *regex,
+                            Token left_token);
+
+  void regexRepeatMinToMax(TokenSet &repeat_tokens, RegEx *regex, int min,
+                           int max);
+
+  void regexRepeatMinToMax(TokenSet &repeat_tokens, RegEx *regex,
+                           Token left_token, int min, int max);
+
+  TokenSet tokens_;
+
+};
+
 }
 
 #endif /* PULL_STAR_REGEX_EXECUTOR_H_ */

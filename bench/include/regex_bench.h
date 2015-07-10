@@ -3,18 +3,21 @@
 
 #include "benchmark.h"
 #include "text_index.h"
+#include "regex.h"
 
 namespace pull_star_bench {
 
 class RegExBench : public dsl_bench::Benchmark {
  public:
-  RegExBench(const std::string& input_file, bool construct, int data_structure);
+  RegExBench(const std::string& input_file, bool construct, int data_structure,
+             int executor_type);
 
   void benchRegex(const std::string& query_file,
                   const std::string& result_path);
 
  private:
   dsl::TextIndex *text_idx_;
+  pull_star::RegularExpression::ExecutorType executor_type_;
 };
 
 }

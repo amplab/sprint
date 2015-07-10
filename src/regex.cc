@@ -8,9 +8,11 @@
 #define MIN(a, b) ((a) < (b)) ? (a) : (b)
 
 pull_star::RegularExpression::RegularExpression(std::string regex,
-                                                dsl::TextIndex *text_idx) {
+                                                dsl::TextIndex *text_idx,
+                                                ExecutorType ex_type) {
   this->regex_ = regex;
   this->text_idx_ = text_idx;
+  this->ex_type_ = ex_type;
   parse();
 }
 
@@ -47,9 +49,15 @@ void pull_star::RegularExpression::wildCard(RegExResults &left,
 }
 
 void pull_star::RegularExpression::subQuery(RegExResults &result, RegEx *r) {
-  BBExecutor executor(text_idx_, r);
-  executor.execute();
-  executor.getResults(result);
+  if (ex_type_ == ExecutorType::BlackBox) {
+    BBExecutor executor(text_idx_, r);
+    executor.execute();
+    executor.getResults(result);
+  } else {
+    PSExecutor executor(text_idx_, r);
+    executor.execute();
+    executor.getResults(result);
+  }
 }
 
 void pull_star::RegularExpression::explain() {

@@ -13,8 +13,13 @@ class RegularExpression {
   typedef std::pair<size_t, size_t> OffsetLength;
   typedef std::set<OffsetLength> RegExResults;
   typedef RegExResults::iterator RegExResultsIterator;
+  typedef enum {
+    BlackBox = 0,
+    PullStar = 1
+  } ExecutorType;
 
-  RegularExpression(std::string regex, dsl::TextIndex *text_idx);
+  RegularExpression(std::string regex, dsl::TextIndex *text_idx,
+                    ExecutorType ex_type = ExecutorType::PullStar);
 
   void execute();
   void subQuery(RegExResults &result, RegEx *r);
@@ -30,6 +35,7 @@ class RegularExpression {
   std::string regex_;
   std::vector<RegEx *> sub_expressions_;
   dsl::TextIndex *text_idx_;
+  ExecutorType ex_type_;
 
   RegExResults r_results;
 };
