@@ -1,5 +1,7 @@
 #include "regex_parser.h"
 
+#include <cstring>
+
 // Parse exception
 const char* pull_star::ParseException::what() const throw () {
   return std::string("Error parsing regular expression.").c_str();
