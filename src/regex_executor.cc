@@ -1,5 +1,7 @@
 #include "regex_executor.h"
 
+#include <algorithm>
+
 pull_star::RegExExecutor::RegExExecutor(dsl::TextIndex *text_idx,
                                         RegEx *regex) {
   text_idx_ = text_idx;
