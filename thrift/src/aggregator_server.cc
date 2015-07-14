@@ -40,7 +40,7 @@ class AggregatorHandler : virtual public pull_star_thrift::AggregatorIf {
           pull_star_thrift::ShardClient client(protocol);
           transport->open();
           fprintf(stderr, "Connected to QueryServer %u!\n", i);
-          client.init();
+          client.send_init();
           shard_clients_.push_back(client);
           shard_transports_.push_back(transport);
         } catch (std::exception& e) {
@@ -59,6 +59,14 @@ class AggregatorHandler : virtual public pull_star_thrift::AggregatorIf {
         shard_clients_.clear();
         fprintf(stderr, "Will retry to connect to client in 30 seconds...\n");
         sleep(30);
+      } else {
+        for (auto client : shard_clients_) {
+          int32_t status = client.recv_init();
+          if(status != 0) {
+            fprintf(stderr, "Initialization failed!\n");
+            return 0;
+          }
+        }
       }
     } while (!success);
 
