@@ -69,6 +69,7 @@ class ShardHandler : virtual public pull_star_thrift::ShardIf {
         const std::string input_text(
             (std::istreambuf_iterator<char>(input_stream)),
             std::istreambuf_iterator<char>());
+        fprintf(stderr, "Read text of size = %zu bytes\n", input_text.length());
         text_idx_ = new dsl::CompressedSuffixTree(input_text, input_file_,
                                                   false);
         input_stream.close();

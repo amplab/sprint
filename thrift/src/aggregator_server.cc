@@ -62,6 +62,8 @@ class AggregatorHandler : virtual public pull_star_thrift::AggregatorIf {
       }
     } while (!success);
 
+    fprintf(stderr, "Connected to all %d shard(s)!\n", num_shards_);
+
     return 0;
   }
 
