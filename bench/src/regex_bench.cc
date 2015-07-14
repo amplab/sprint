@@ -66,6 +66,7 @@ void pull_star_bench::RegExBench::benchRegex(const std::string& query_file,
   std::ofstream result_stream(result_path);
   if (text_idx_) {
     for (auto query : queries) {
+      fprintf(stderr, "Benchmarking query [%s]\n", query.c_str());
       pull_star::RegularExpression regex(query, text_idx_, executor_type_);
       std::set<std::pair<size_t, size_t>> results;
       time_t start = get_timestamp();
@@ -74,15 +75,18 @@ void pull_star_bench::RegExBench::benchRegex(const std::string& query_file,
       time_t end = get_timestamp();
       time_t tot = end - start;
       result_stream << results.size() << "\t" << tot << "\n";
+      fprintf(stderr, "Query size = %zu, time = %llu\n", results.size(), tot);
     }
   } else if (client_) {
     for (auto query : queries) {
+      fprintf(stderr, "Benchmarking query [%s]\n", query.c_str());
       std::set<int64_t> results;
       time_t start = get_timestamp();
       client_->regexSearch(results, query);
       time_t end = get_timestamp();
       time_t tot = end - start;
       result_stream << results.size() << "\t" << tot << "\n";
+      fprintf(stderr, "Query size = %zu, time = %llu\n", results.size(), tot);
     }
   }
 
@@ -104,7 +108,7 @@ int main(int argc, char **argv) {
 
   int c;
   bool construct = true;
-  bool thrift = true;
+  bool thrift = false;
   std::string query_file = "queries.txt";
   std::string res_file = "res.txt";
   int data_structure = 0;
@@ -118,6 +122,7 @@ int main(int argc, char **argv) {
         break;
       }
       case 't': {
+        thrift = true;
         break;
       }
       case 'q': {
@@ -147,17 +152,25 @@ int main(int argc, char **argv) {
     }
   }
 
-  if ((optind != argc) != thrift) {
-    print_usage(argv[0]);
-    return -1;
-  }
-
   pull_star_bench::RegExBench* bench;
   if (!thrift) {
+
+    if (optind == argc) {
+      print_usage(argv[0]);
+      return -1;
+    }
+
+    fprintf(
+        stderr,
+        "Benchmarking data-structure %d with construct = %d executor type %d\n",
+        data_structure, construct, executor_type);
+
     std::string input_file = std::string(argv[optind]);
     bench = new pull_star_bench::RegExBench(input_file, construct,
                                             data_structure, executor_type);
   } else {
+
+    fprintf(stderr, "Benchmarking thrift mode...\n");
     using namespace ::apache::thrift::protocol;
     using namespace ::apache::thrift::transport;
 
@@ -165,6 +178,7 @@ int main(int argc, char **argv) {
     boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
     boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
     pull_star_thrift::AggregatorClient client(protocol);
+    bench = new pull_star_bench::RegExBench(&client, executor_type);
   }
   bench->benchRegex(query_file, res_file);
 
