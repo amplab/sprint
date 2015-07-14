@@ -82,7 +82,8 @@ void pull_star::BBExecutor::compute(RegExResult& result, RegEx* regex) {
 void pull_star::BBExecutor::regexMgram(RegExResult& result,
                                        RegExPrimitive* regex) {
   std::string mgram = regex->getPrimitive();
-  std::vector<int64_t> offsets = text_idx_->search(mgram);
+  std::vector<int64_t> offsets;
+  text_idx_->search(offsets, mgram);
   for (auto offset : offsets) {
     result.insert(OffsetLength(offset, mgram.length()));
   }
@@ -181,7 +182,8 @@ pull_star::PSExecutor::PSExecutor(dsl::TextIndex* text_idx, RegEx* regex)
 void pull_star::PSExecutor::execute() {
   compute(tokens_, regex_);
   for(Token token: tokens_) {
-    std::vector<int64_t> results = text_idx_->search(token);
+    std::vector<int64_t> results;
+    text_idx_->search(results, token);
     for(int64_t offset: results) {
       final_result_.insert(OffsetLength(offset, token.length()));
     }
