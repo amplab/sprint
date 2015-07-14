@@ -55,6 +55,8 @@ class AggregatorHandler : virtual public pull_star_thrift::AggregatorIf {
         for (auto transport : shard_transports_) {
           transport->close();
         }
+        shard_transports_.clear();
+        shard_clients_.clear();
         fprintf(stderr, "Will retry to connect to client in 30 seconds...\n");
         sleep(30);
       }
@@ -89,6 +91,12 @@ int main(int argc, char **argv) {
     print_usage(argv[0]);
     return -1;
   }
+
+  fprintf(stderr, "Command line: ");
+  for (int i = 0; i < argc; i++) {
+    fprintf(stderr, "%s ", argv[i]);
+  }
+  fprintf(stderr, "\n");
 
   int c;
   uint32_t port = 11000, num_shards = 1;

@@ -30,12 +30,15 @@ class ShardHandler : virtual public pull_star_thrift::ShardIf {
 
   int32_t init() {
     if (construct_) {
+      fprintf(stderr, "Constructing data-structures for file %s...\n",
+              input_file_.c_str());
       std::ifstream input_stream(input_file_);
       const std::string input_text(
           (std::istreambuf_iterator<char>(input_stream)),
           std::istreambuf_iterator<char>());
       input_stream.close();
       if (data_structure_ == 0) {
+        fprintf(stderr, "Constructing suffix tree...\n");
         text_idx_ = new dsl::SuffixTree(input_text);
 
         // Serialize to disk for future use.
@@ -43,19 +46,25 @@ class ShardHandler : virtual public pull_star_thrift::ShardIf {
         text_idx_->serialize(out);
         out.close();
       } else if (data_structure_ == 1) {
+        fprintf(stderr, "Constructing compressed suffix tree...\n");
         text_idx_ = new dsl::CompressedSuffixTree(input_text, input_file_);
       } else {
         fprintf(stderr, "Data structure %d not supported yet.\n",
                 data_structure_);
         exit(0);
       }
+      fprintf(stderr, "Finished constructing!\n");
     } else {
+      fprintf(stderr, "Loading data-structures for file %s...\n",
+              input_file_.c_str());
       if (data_structure_ == 0) {
+        fprintf(stderr, "Loading suffix tree from file...\n");
         std::ifstream input_stream(input_file_ + ".st");
         text_idx_ = new dsl::SuffixTree();
         text_idx_->deserialize(input_stream);
         input_stream.close();
       } else if (data_structure_ == 1) {
+        fprintf(stderr, "Loading compressed suffix tree from file...\n");
         std::ifstream input_stream(input_file_);
         const std::string input_text(
             (std::istreambuf_iterator<char>(input_stream)),
@@ -64,6 +73,7 @@ class ShardHandler : virtual public pull_star_thrift::ShardIf {
                                                   false);
         input_stream.close();
       }
+      fprintf(stderr, "Finished loading!\n");
     }
 
     return 0;
@@ -101,6 +111,12 @@ int main(int argc, char **argv) {
     print_usage(argv[0]);
     return -1;
   }
+
+  fprintf(stderr, "Command line: ");
+  for (int i = 0; i < argc; i++) {
+    fprintf(stderr, "%s ", argv[i]);
+  }
+  fprintf(stderr, "\n");
 
   int c;
   uint32_t mode = 0, port = 11001, data_structure = 1, executor_type = 1;
