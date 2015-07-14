@@ -8,6 +8,7 @@
 #include "compressed_suffix_tree.h"
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TBufferTransports.h>
+#include <thrift/transport/TServerSocket.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 
 pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
@@ -49,12 +50,9 @@ pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
   }
   executor_type_ =
       static_cast<pull_star::RegularExpression::ExecutorType>(executor_type);
-  client_ = NULL;
 }
 
-pull_star_bench::RegExBench::RegExBench(
-    pull_star_thrift::AggregatorClient* client, int executor_type) {
-  client_ = client;
+pull_star_bench::RegExBench::RegExBench(int executor_type) {
   executor_type_ =
       static_cast<pull_star::RegularExpression::ExecutorType>(executor_type);
   text_idx_ = NULL;
@@ -64,33 +62,43 @@ void pull_star_bench::RegExBench::benchRegex(const std::string& query_file,
                                              const std::string& result_path) {
   std::vector<std::string> queries = readQueryFile(query_file);
   std::ofstream result_stream(result_path);
-  if (text_idx_) {
-    for (auto query : queries) {
-      fprintf(stderr, "Benchmarking query [%s]\n", query.c_str());
-      pull_star::RegularExpression regex(query, text_idx_, executor_type_);
-      std::set<std::pair<size_t, size_t>> results;
-      time_t start = get_timestamp();
-      regex.execute();
-      regex.getResults(results);
-      time_t end = get_timestamp();
-      time_t tot = end - start;
-      result_stream << results.size() << "\t" << tot << "\n";
-      fprintf(stderr, "Query size = %zu, time = %llu\n", results.size(), tot);
-    }
-  } else if (client_) {
-    for (auto query : queries) {
-      fprintf(stderr, "Benchmarking query [%s]\n", query.c_str());
-      std::set<int64_t> results;
-      time_t start = get_timestamp();
-      client_->regexSearch(results, query);
-      time_t end = get_timestamp();
-      time_t tot = end - start;
-      result_stream << results.size() << "\t" << tot << "\n";
-      fprintf(stderr, "Query size = %zu, time = %llu\n", results.size(), tot);
-    }
+
+  for (auto query : queries) {
+    fprintf(stderr, "Benchmarking query [%s]\n", query.c_str());
+    pull_star::RegularExpression regex(query, text_idx_, executor_type_);
+    std::set<std::pair<size_t, size_t>> results;
+    time_t start = get_timestamp();
+    regex.execute();
+    regex.getResults(results);
+    time_t end = get_timestamp();
+    time_t tot = end - start;
+    result_stream << results.size() << "\t" << tot << "\n";
+    fprintf(stderr, "Query result size = %zu, time = %llu us\n", results.size(), tot);
   }
 
   result_stream.close();
+}
+
+void pull_star_bench::RegExBench::benchRegex(
+    pull_star_thrift::AggregatorClient& client, const std::string& query_file,
+    const std::string& result_path) {
+
+  std::vector<std::string> queries = readQueryFile(query_file);
+  std::ofstream result_stream(result_path);
+
+  for (auto query : queries) {
+    fprintf(stderr, "Benchmarking query [%s]\n", query.c_str());
+    std::set<int64_t> results;
+    time_t start = get_timestamp();
+    client.regexSearch(results, query);
+    time_t end = get_timestamp();
+    time_t tot = end - start;
+    result_stream << results.size() << "\t" << tot << "\n";
+    fprintf(stderr, "Query result size = %zu, time = %llu us\n", results.size(), tot);
+  }
+
+  result_stream.close();
+
 }
 
 void print_usage(char *exec) {
@@ -168,19 +176,25 @@ int main(int argc, char **argv) {
     std::string input_file = std::string(argv[optind]);
     bench = new pull_star_bench::RegExBench(input_file, construct,
                                             data_structure, executor_type);
+    bench->benchRegex(query_file, res_file);
   } else {
 
     fprintf(stderr, "Benchmarking thrift mode...\n");
     using namespace ::apache::thrift::protocol;
     using namespace ::apache::thrift::transport;
 
-    boost::shared_ptr<TSocket> socket(new TSocket("localhost", port));
-    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-    pull_star_thrift::AggregatorClient client(protocol);
-    bench = new pull_star_bench::RegExBench(&client, executor_type);
+    try {
+      boost::shared_ptr<TSocket> socket(new TSocket("localhost", port));
+      boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+      boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+      pull_star_thrift::AggregatorClient client(protocol);
+      transport->open();
+      bench = new pull_star_bench::RegExBench(executor_type);
+      bench->benchRegex(client, query_file, res_file);
+    } catch (std::exception& e) {
+      fprintf(stderr, "Error in establishing connection: %s\n", e.what());
+    }
   }
-  bench->benchRegex(query_file, res_file);
 
   return 0;
 }
