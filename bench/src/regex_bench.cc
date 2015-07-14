@@ -4,9 +4,11 @@
 #include <cstdlib>
 #include <cstdio>
 
-#include "regex.h"
 #include "suffix_tree.h"
 #include "compressed_suffix_tree.h"
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TBufferTransports.h>
+#include <thrift/protocol/TBinaryProtocol.h>
 
 pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
                                         bool construct, int data_structure,
@@ -47,53 +49,75 @@ pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
   }
   executor_type_ =
       static_cast<pull_star::RegularExpression::ExecutorType>(executor_type);
+  client_ = NULL;
+}
+
+pull_star_bench::RegExBench::RegExBench(
+    pull_star_thrift::AggregatorClient* client, int executor_type) {
+  client_ = client;
+  executor_type_ =
+      static_cast<pull_star::RegularExpression::ExecutorType>(executor_type);
+  text_idx_ = NULL;
 }
 
 void pull_star_bench::RegExBench::benchRegex(const std::string& query_file,
                                              const std::string& result_path) {
   std::vector<std::string> queries = readQueryFile(query_file);
   std::ofstream result_stream(result_path);
-  for (auto query : queries) {
-    pull_star::RegularExpression regex(query, text_idx_, executor_type_);
-    std::set<std::pair<size_t, size_t>> results;
-    time_t start = get_timestamp();
-    regex.execute();
-    regex.getResults(results);
-    time_t end = get_timestamp();
-    time_t tot = end - start;
-    result_stream << results.size() << "\t" << tot << "\n";
+  if (text_idx_) {
+    for (auto query : queries) {
+      pull_star::RegularExpression regex(query, text_idx_, executor_type_);
+      std::set<std::pair<size_t, size_t>> results;
+      time_t start = get_timestamp();
+      regex.execute();
+      regex.getResults(results);
+      time_t end = get_timestamp();
+      time_t tot = end - start;
+      result_stream << results.size() << "\t" << tot << "\n";
+    }
+  } else if (client_) {
+    for (auto query : queries) {
+      std::set<int64_t> results;
+      time_t start = get_timestamp();
+      client_->regexSearch(results, query);
+      time_t end = get_timestamp();
+      time_t tot = end - start;
+      result_stream << results.size() << "\t" << tot << "\n";
+    }
   }
+
+  result_stream.close();
 }
 
 void print_usage(char *exec) {
   fprintf(
       stderr,
-      "Usage: %s [-m mode] [-t type] [-q query_file] [-r res_file] [-d data_structure] [-e executor_type] [file]\n",
+      "Usage: %s [-t] [-m mode] [-q query_file] [-r res_file] [-d data_structure] [-e executor_type] [file]\n",
       exec);
 }
 
 int main(int argc, char **argv) {
-  if (argc < 2 || argc > 14) {
+  if (argc < 2 || argc > 15) {
     print_usage(argv[0]);
     return -1;
   }
 
   int c;
   bool construct = true;
-  std::string type = "latency-regex";
+  bool thrift = true;
   std::string query_file = "queries.txt";
   std::string res_file = "res.txt";
   int data_structure = 0;
   int executor_type = 1;
+  int port = 11000;
 
-  while ((c = getopt(argc, argv, "m:t:q:r:d:e:")) != -1) {
+  while ((c = getopt(argc, argv, "m:tq:r:d:e:p:")) != -1) {
     switch (c) {
       case 'm': {
         construct = atoi(optarg);
         break;
       }
       case 't': {
-        type = std::string(optarg);
         break;
       }
       case 'q': {
@@ -112,6 +136,10 @@ int main(int argc, char **argv) {
         executor_type = atoi(optarg);
         break;
       }
+      case 'p': {
+        port = atoi(optarg);
+        break;
+      }
       default: {
         fprintf(stderr, "Unsupported option %c.\n", (char) c);
         exit(0);
@@ -119,21 +147,26 @@ int main(int argc, char **argv) {
     }
   }
 
-  if (optind == argc) {
+  if ((optind != argc) != thrift) {
     print_usage(argv[0]);
     return -1;
   }
 
-  std::string input_file = std::string(argv[optind]);
-  pull_star_bench::RegExBench bench(input_file, construct, data_structure,
-                                    executor_type);
-
-  if (type == "latency-regex") {
-    bench.benchRegex(query_file, res_file);
+  pull_star_bench::RegExBench* bench;
+  if (!thrift) {
+    std::string input_file = std::string(argv[optind]);
+    bench = new pull_star_bench::RegExBench(input_file, construct,
+                                            data_structure, executor_type);
   } else {
-    fprintf(stderr, "Unsupported type %s.\n", type.c_str());
-    exit(0);
+    using namespace ::apache::thrift::protocol;
+    using namespace ::apache::thrift::transport;
+
+    boost::shared_ptr<TSocket> socket(new TSocket("localhost", port));
+    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    pull_star_thrift::AggregatorClient client(protocol);
   }
+  bench->benchRegex(query_file, res_file);
 
   return 0;
 }

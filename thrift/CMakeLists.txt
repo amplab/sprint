@@ -15,8 +15,6 @@ else()
 endif()
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g")
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake-modules)
-
 find_package(Thrift REQUIRED)
 
 set(AGGREGATOR_FILE ${CMAKE_CURRENT_SOURCE_DIR}/template/aggregator.thrift)
@@ -29,6 +27,7 @@ file(MAKE_DIRECTORY ${INCLUDE_DIR})
 thrift_gen_cpp(${AGGREGATOR_FILE} ${SOURCES_DIR} ${INCLUDE_DIR} AGGREGATOR_SOURCES)
 thrift_gen_cpp(${SHARD_FILE} ${SOURCES_DIR} ${INCLUDE_DIR} SHARD_SOURCES)
 
+set(RXCLIENT_SOURCES ${SHARD_SOURCES} ${AGGREGATOR_SOURCES})
 set(AGGREGATOR_SOURCES ${AGGREGATOR_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/src/aggregator_server.cc" ${SHARD_SOURCES})
 set(SHARD_SOURCES ${SHARD_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/src/shard_server.cc")
 
@@ -40,6 +39,7 @@ set(EXTERNAL_INCLUDE ../external/ds-lib/bench/include ../external/ds-lib/externa
 include_directories(${EXTERNAL_INCLUDE} ${INCLUDE_DIR})
 add_executable(rxshard ${SHARD_SOURCES})
 add_executable(rxaggregator ${AGGREGATOR_SOURCES})
+add_library(rxclient ${RXCLIENT_SOURCES})
 target_link_libraries(rxshard pullstar)
 target_link_libraries(rxshard ${THRIFT_LIBRARIES})
 target_link_libraries(rxaggregator pullstar)
