@@ -5,9 +5,10 @@
 #include <fstream>
 
 #include "regex.h"
-#include "text_index.h"
-#include "suffix_tree.h"
-#include "compressed_suffix_tree.h"
+
+#include "text/compressed_suffix_tree.h"
+#include "text/suffix_tree.h"
+#include "text/text_index.h"
 #include "benchmark.h"
 
 void print_usage(char *exec) {

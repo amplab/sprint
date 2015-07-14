@@ -1,7 +1,5 @@
 #include "Shard.h"
 
-#include "suffix_tree.h"
-#include "compressed_suffix_tree.h"
 #include "regex.h"
 
 #include <thrift/protocol/TBinaryProtocol.h>
@@ -10,6 +8,8 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/concurrency/PosixThreadFactory.h>
+#include "text/compressed_suffix_tree.h"
+#include "text/suffix_tree.h"
 
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;

@@ -2,8 +2,9 @@
 #define PULL_STAR_BENCH_REGEX_BENCH_H_
 
 #include "benchmark.h"
-#include "text_index.h"
 #include "regex.h"
+
+#include "text/text_index.h"
 #include "Aggregator.h"
 
 namespace pull_star_bench {

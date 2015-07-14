@@ -4,12 +4,12 @@
 #include <cstdlib>
 #include <cstdio>
 
-#include "suffix_tree.h"
-#include "compressed_suffix_tree.h"
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/protocol/TBinaryProtocol.h>
+#include "text/compressed_suffix_tree.h"
+#include "text/suffix_tree.h"
 
 pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
                                         bool construct, int data_structure,

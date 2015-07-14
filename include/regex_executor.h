@@ -3,7 +3,7 @@
 
 #include <set>
 
-#include "text_index.h"
+#include "text/text_index.h"
 #include "regex_types.h"
 
 namespace pull_star {
