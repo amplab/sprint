@@ -9,7 +9,8 @@
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include "text/compressed_suffix_tree.h"
-#include "text/suffix_tree.h"
+#include "text/suffix_tree_index.h"
+#include "text/suffix_array_index.h"
 
 pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
                                         bool construct, int data_structure,
@@ -21,7 +22,7 @@ pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
                                  std::istreambuf_iterator<char>());
     input_stream.close();
     if (data_structure == 0) {
-      text_idx_ = new dsl::SuffixTree(input_text);
+      text_idx_ = new dsl::SuffixTreeIndex(input_text);
 
       // Serialize to disk for future use.
       std::ofstream out(input_file + ".st");
@@ -29,6 +30,20 @@ pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
       out.close();
     } else if (data_structure == 1) {
       text_idx_ = new dsl::CompressedSuffixTree(input_text, input_file);
+    } else if (data_structure == 2) {
+      text_idx_ = new dsl::SuffixArrayIndex(input_text);
+
+      // Serialize to disk for future use.
+      std::ofstream out(input_file + ".sa");
+      text_idx_->serialize(out);
+      out.close();
+    } else if (data_structure == 3) {
+      text_idx_ = new dsl::AugmentedSuffixArrayIndex(input_text);
+
+      // Serialize to disk for future use.
+      std::ofstream out(input_file + ".asa");
+      text_idx_->serialize(out);
+      out.close();
     } else {
       fprintf(stderr, "Data structure %d not supported yet.\n", data_structure);
       exit(0);
@@ -36,7 +51,7 @@ pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
   } else {
     if (data_structure == 0) {
       std::ifstream input_stream(input_file + ".st");
-      text_idx_ = new dsl::SuffixTree();
+      text_idx_ = new dsl::SuffixTreeIndex();
       text_idx_->deserialize(input_stream);
       input_stream.close();
     } else if (data_structure == 1) {
@@ -46,6 +61,19 @@ pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
           std::istreambuf_iterator<char>());
       text_idx_ = new dsl::CompressedSuffixTree(input_text, input_file, false);
       input_stream.close();
+    } else if (data_structure == 2) {
+      std::ifstream input_stream(input_file + ".sa");
+      text_idx_ = new dsl::SuffixArrayIndex();
+      text_idx_->deserialize(input_stream);
+      input_stream.close();
+    } else if (data_structure == 3) {
+      std::ifstream input_stream(input_file + ".asa");
+      text_idx_ = new dsl::AugmentedSuffixArrayIndex();
+      text_idx_->deserialize(input_stream);
+      input_stream.close();
+    } else {
+      fprintf(stderr, "Data structure %d not supported yet.\n", data_structure);
+      exit(0);
     }
   }
   executor_type_ =

@@ -7,7 +7,7 @@
 #include "regex.h"
 
 #include "text/compressed_suffix_tree.h"
-#include "text/suffix_tree.h"
+#include "text/suffix_tree_index.h"
 #include "text/text_index.h"
 #include "text/suffix_array_index.h"
 #include "benchmark.h"
@@ -15,7 +15,8 @@
 void print_usage(char *exec) {
   fprintf(
   stderr,
-          "Usage: %s [-m mode] [-d data-structure] [-e executor_type] [file]\n", exec);
+          "Usage: %s [-m mode] [-d data-structure] [-e executor_type] [file]\n",
+          exec);
 }
 
 int main(int argc, char **argv) {
@@ -63,7 +64,7 @@ int main(int argc, char **argv) {
                                  std::istreambuf_iterator<char>());
     input_stream.close();
     if (data_structure == 0) {
-      text_idx_ = new dsl::SuffixTree(input_text);
+      text_idx_ = new dsl::SuffixTreeIndex(input_text);
 
       // Serialize to disk for future use.
       std::ofstream out(input_file + ".st");
@@ -78,6 +79,13 @@ int main(int argc, char **argv) {
       std::ofstream out(input_file + ".sa");
       text_idx_->serialize(out);
       out.close();
+    } else if (data_structure == 3) {
+      text_idx_ = new dsl::AugmentedSuffixArrayIndex(input_text);
+
+      // Serialize to disk for future use.
+      std::ofstream out(input_file + ".asa");
+      text_idx_->serialize(out);
+      out.close();
     } else {
       fprintf(stderr, "Data structure %d not supported yet.\n", data_structure);
       exit(0);
@@ -85,7 +93,7 @@ int main(int argc, char **argv) {
   } else {
     if (data_structure == 0) {
       std::ifstream input_stream(input_file + ".st");
-      text_idx_ = new dsl::SuffixTree();
+      text_idx_ = new dsl::SuffixTreeIndex();
       text_idx_->deserialize(input_stream);
       input_stream.close();
     } else if (data_structure == 1) {
@@ -100,6 +108,14 @@ int main(int argc, char **argv) {
       text_idx_ = new dsl::SuffixArrayIndex();
       text_idx_->deserialize(input_stream);
       input_stream.close();
+    } else if (data_structure == 3) {
+      std::ifstream input_stream(input_file + ".asa");
+      text_idx_ = new dsl::AugmentedSuffixArrayIndex();
+      text_idx_->deserialize(input_stream);
+      input_stream.close();
+    } else {
+      fprintf(stderr, "Data structure %d not supported yet.\n", data_structure);
+      exit(0);
     }
   }
 

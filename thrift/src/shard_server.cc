@@ -9,7 +9,8 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/concurrency/PosixThreadFactory.h>
 #include "text/compressed_suffix_tree.h"
-#include "text/suffix_tree.h"
+#include "text/suffix_tree_index.h"
+#include "text/suffix_array_index.h"
 
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
@@ -39,7 +40,7 @@ class ShardHandler : virtual public pull_star_thrift::ShardIf {
       input_stream.close();
       if (data_structure_ == 0) {
         fprintf(stderr, "Constructing suffix tree...\n");
-        text_idx_ = new dsl::SuffixTree(input_text);
+        text_idx_ = new dsl::SuffixTreeIndex(input_text);
 
         // Serialize to disk for future use.
         std::ofstream out(input_file_ + ".st");
@@ -48,6 +49,22 @@ class ShardHandler : virtual public pull_star_thrift::ShardIf {
       } else if (data_structure_ == 1) {
         fprintf(stderr, "Constructing compressed suffix tree...\n");
         text_idx_ = new dsl::CompressedSuffixTree(input_text, input_file_);
+      } else if (data_structure_ == 2) {
+        fprintf(stderr, "Constructing suffix array...\n");
+        text_idx_ = new dsl::SuffixArrayIndex(input_text);
+
+        // Serialize to disk for future use.
+        std::ofstream out(input_file_ + ".sa");
+        text_idx_->serialize(out);
+        out.close();
+      } else if (data_structure_ == 3) {
+        fprintf(stderr, "Constructing augmented suffix array...\n");
+        text_idx_ = new dsl::AugmentedSuffixArrayIndex(input_text);
+
+        // Serialize to disk for future use.
+        std::ofstream out(input_file_ + ".asa");
+        text_idx_->serialize(out);
+        out.close();
       } else {
         fprintf(stderr, "Data structure %d not supported yet.\n",
                 data_structure_);
@@ -60,7 +77,7 @@ class ShardHandler : virtual public pull_star_thrift::ShardIf {
       if (data_structure_ == 0) {
         fprintf(stderr, "Loading suffix tree from file...\n");
         std::ifstream input_stream(input_file_ + ".st");
-        text_idx_ = new dsl::SuffixTree();
+        text_idx_ = new dsl::SuffixTreeIndex();
         text_idx_->deserialize(input_stream);
         input_stream.close();
       } else if (data_structure_ == 1) {
@@ -73,6 +90,22 @@ class ShardHandler : virtual public pull_star_thrift::ShardIf {
         text_idx_ = new dsl::CompressedSuffixTree(input_text, input_file_,
                                                   false);
         input_stream.close();
+      } else if (data_structure_ == 2) {
+        fprintf(stderr, "Loading suffix array from file...\n");
+        std::ifstream input_stream(input_file_ + ".sa");
+        text_idx_ = new dsl::SuffixArrayIndex();
+        text_idx_->deserialize(input_stream);
+        input_stream.close();
+      } else if (data_structure_ == 3) {
+        fprintf(stderr, "Loading suffix array from file...\n");
+        std::ifstream input_stream(input_file_ + ".asa");
+        text_idx_ = new dsl::AugmentedSuffixArrayIndex();
+        text_idx_->deserialize(input_stream);
+        input_stream.close();
+      } else {
+        fprintf(stderr, "Data structure %d not supported yet.\n",
+                data_structure_);
+        exit(0);
       }
       fprintf(stderr, "Finished loading!\n");
     }
