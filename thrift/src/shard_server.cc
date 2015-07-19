@@ -123,6 +123,10 @@ class ShardHandler : virtual public pull_star_thrift::ShardIf {
     }
   }
 
+  void search(std::vector<int64_t> & _return, const std::string& query) {
+    text_idx_->search(_return, query);
+  }
+
  private:
   dsl::TextIndex* text_idx_;
   std::string input_file_;

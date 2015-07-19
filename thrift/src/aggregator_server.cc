@@ -85,6 +85,16 @@ class AggregatorHandler : virtual public pull_star_thrift::AggregatorIf {
     }
   }
 
+  void search(std::vector<int64_t> & _return, const std::string& query) {
+    for (auto client : shard_clients_) {
+      client.send_search(query);
+    }
+
+    for (auto client : shard_clients_) {
+      client.recv_search(_return);
+    }
+  }
+
  private:
   int32_t num_shards_;
   std::vector<pull_star_thrift::ShardClient> shard_clients_;

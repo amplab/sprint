@@ -114,19 +114,60 @@ void pull_star_bench::RegExBench::benchRegex(
   std::vector<std::string> queries = readQueryFile(query_file);
   std::ofstream result_stream(result_path);
 
+  uint32_t q_id = 0;
   for (auto query : queries) {
     fprintf(stderr, "Benchmarking query [%s]\n", query.c_str());
-    std::set<int64_t> results;
-    time_t start = get_timestamp();
-    client.regexSearch(results, query);
-    time_t end = get_timestamp();
-    time_t tot = end - start;
-    result_stream << results.size() << "\t" << tot << "\n";
-    fprintf(stderr, "Query result size = %zu, time = %llu us\n", results.size(), tot);
+    for(uint32_t i = 0; i < 10; i++) {
+      std::set<int64_t> results;
+      time_t start = get_timestamp();
+      client.regexSearch(results, query);
+      time_t end = get_timestamp();
+      time_t tot = end - start;
+      result_stream << q_id << "\t" << i << "\t" << results.size() << "\t" << tot << "\n";
+      fprintf(stderr, "Iteration %u, query %u, result size = %zu, time = %llu us\n", i, q_id, results.size(), tot);
+    }
+    q_id++;
   }
 
   result_stream.close();
+}
 
+void pull_star_bench::RegExBench::benchSearch(const std::string& query_file,
+                                             const std::string& result_path) {
+  std::vector<std::string> queries = readQueryFile(query_file);
+  std::ofstream result_stream(result_path);
+
+  for (auto query : queries) {
+    std::vector<int64_t> results;
+    time_t start = get_timestamp();
+    text_idx_->search(results, query);
+    time_t end = get_timestamp();
+    time_t tot = end - start;
+    result_stream << results.size() << "\t" << tot << "\n";
+  }
+
+  result_stream.close();
+}
+
+void pull_star_bench::RegExBench::benchSearch(
+    pull_star_thrift::AggregatorClient& client, const std::string& query_file,
+    const std::string& result_path) {
+
+  std::vector<std::string> queries = readQueryFile(query_file);
+  std::ofstream result_stream(result_path);
+
+  uint64_t q_id = 0;
+  for (auto query : queries) {
+    std::vector<int64_t> results;
+    time_t start = get_timestamp();
+    client.search(results, query);
+    time_t end = get_timestamp();
+    time_t tot = end - start;
+    result_stream << q_id << "\t" << results.size() << "\t" << tot << "\n";
+    q_id++;
+  }
+
+  result_stream.close();
 }
 
 void print_usage(char *exec) {
