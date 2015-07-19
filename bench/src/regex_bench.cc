@@ -173,12 +173,12 @@ void pull_star_bench::RegExBench::benchSearch(
 void print_usage(char *exec) {
   fprintf(
       stderr,
-      "Usage: %s [-t] [-m mode] [-q query_file] [-r res_file] [-d data_structure] [-e executor_type] [file]\n",
+      "Usage: %s [-t] [-m mode] [-q query_file] [-r res_file] [-d data_structure] [-e executor_type] [-b benchmark] [file]\n",
       exec);
 }
 
 int main(int argc, char **argv) {
-  if (argc < 2 || argc > 15) {
+  if (argc < 2 || argc > 17) {
     print_usage(argv[0]);
     return -1;
   }
@@ -188,11 +188,12 @@ int main(int argc, char **argv) {
   bool thrift = false;
   std::string query_file = "queries.txt";
   std::string res_file = "res.txt";
+  std::string benchmark = "latency-regex";
   int data_structure = 0;
   int executor_type = 1;
   int port = 11000;
 
-  while ((c = getopt(argc, argv, "m:tq:r:d:e:p:")) != -1) {
+  while ((c = getopt(argc, argv, "m:tq:r:d:e:p:b:")) != -1) {
     switch (c) {
       case 'm': {
         construct = atoi(optarg);
@@ -222,6 +223,10 @@ int main(int argc, char **argv) {
         port = atoi(optarg);
         break;
       }
+      case 'b': {
+        benchmark = std::string(optarg);
+        break;
+      }
       default: {
         fprintf(stderr, "Unsupported option %c.\n", (char) c);
         exit(0);
@@ -243,9 +248,17 @@ int main(int argc, char **argv) {
         data_structure, construct, executor_type);
 
     std::string input_file = std::string(argv[optind]);
+
     bench = new pull_star_bench::RegExBench(input_file, construct,
                                             data_structure, executor_type);
-    bench->benchRegex(query_file, res_file);
+    if(benchmark == "latency-regex") {
+      bench->benchRegex(query_file, res_file);
+    } else if(benchmark == "latency-regex") {
+      bench->benchSearch(query_file, res_file);
+    } else {
+      fprintf(stderr, "Unsupported benchmark %s.\n", benchmark.c_str());
+      exit(0);
+    }
   } else {
 
     fprintf(stderr, "Benchmarking thrift mode...\n");
@@ -259,7 +272,14 @@ int main(int argc, char **argv) {
       pull_star_thrift::AggregatorClient client(protocol);
       transport->open();
       bench = new pull_star_bench::RegExBench(executor_type);
-      bench->benchRegex(client, query_file, res_file);
+      if(benchmark == "latency-regex") {
+        bench->benchRegex(client, query_file, res_file);
+      } else if(benchmark == "latency-regex") {
+        bench->benchSearch(client, query_file, res_file);
+      } else {
+        fprintf(stderr, "Unsupported benchmark %s.\n", benchmark.c_str());
+        exit(0);
+      }
     } catch (std::exception& e) {
       fprintf(stderr, "Error in establishing connection: %s\n", e.what());
     }
