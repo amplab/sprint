@@ -253,7 +253,7 @@ int main(int argc, char **argv) {
                                             data_structure, executor_type);
     if(benchmark == "latency-regex") {
       bench->benchRegex(query_file, res_file);
-    } else if(benchmark == "latency-regex") {
+    } else if(benchmark == "latency-search") {
       bench->benchSearch(query_file, res_file);
     } else {
       fprintf(stderr, "Unsupported benchmark %s.\n", benchmark.c_str());
@@ -274,7 +274,7 @@ int main(int argc, char **argv) {
       bench = new pull_star_bench::RegExBench(executor_type);
       if(benchmark == "latency-regex") {
         bench->benchRegex(client, query_file, res_file);
-      } else if(benchmark == "latency-regex") {
+      } else if(benchmark == "latency-search") {
         bench->benchSearch(client, query_file, res_file);
       } else {
         fprintf(stderr, "Unsupported benchmark %s.\n", benchmark.c_str());
