@@ -81,7 +81,9 @@ class AggregatorHandler : virtual public pull_star_thrift::AggregatorIf {
     }
 
     for (auto client : shard_clients_) {
-      client.recv_regexSearch(_return);
+      std::set<int64_t> res;
+      client.recv_regexSearch(res);
+      _return.insert(res.begin(), res.end());
     }
   }
 
@@ -91,7 +93,9 @@ class AggregatorHandler : virtual public pull_star_thrift::AggregatorIf {
     }
 
     for (auto client : shard_clients_) {
-      client.recv_search(_return);
+      std::vector<int64_t> res;
+      client.recv_search(res);
+      _return.insert(_return.begin(), res.begin(), res.end());
     }
   }
 
