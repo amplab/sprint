@@ -94,7 +94,7 @@ void pull_star_bench::RegExBench::benchRegex(const std::string& query_file,
   uint32_t q_id = 0;
   for (auto query : queries) {
     fprintf(stderr, "Benchmarking query [%s]\n", query.c_str());
-    for(uint32_t i = 0; i < 1; i++) {
+    for(uint32_t i = 0; i < 10; i++) {
       pull_star::RegularExpression regex(query, text_idx_, executor_type_);
       std::set<std::pair<size_t, size_t>> results;
       time_t start = get_timestamp();
