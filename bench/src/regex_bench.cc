@@ -91,17 +91,21 @@ void pull_star_bench::RegExBench::benchRegex(const std::string& query_file,
   std::vector<std::string> queries = readQueryFile(query_file);
   std::ofstream result_stream(result_path);
 
+  uint32_t q_id = 0;
   for (auto query : queries) {
     fprintf(stderr, "Benchmarking query [%s]\n", query.c_str());
-    pull_star::RegularExpression regex(query, text_idx_, executor_type_);
-    std::set<std::pair<size_t, size_t>> results;
-    time_t start = get_timestamp();
-    regex.execute();
-    regex.getResults(results);
-    time_t end = get_timestamp();
-    time_t tot = end - start;
-    result_stream << results.size() << "\t" << tot << "\n";
-    fprintf(stderr, "Query result size = %zu, time = %llu us\n", results.size(), tot);
+    for(uint32_t i = 0; i < 1; i++) {
+      pull_star::RegularExpression regex(query, text_idx_, executor_type_);
+      std::set<std::pair<size_t, size_t>> results;
+      time_t start = get_timestamp();
+      regex.execute();
+      regex.getResults(results);
+      time_t end = get_timestamp();
+      time_t tot = end - start;
+      result_stream << q_id << "\t" << i << "\t" << results.size() << "\t" << tot << "\n";
+      fprintf(stderr, "Iteration %u, query %u, result size = %zu, time = %llu us\n", i, q_id, results.size(), tot);
+    }
+    q_id++;
   }
 
   result_stream.close();
@@ -117,7 +121,7 @@ void pull_star_bench::RegExBench::benchRegex(
   uint32_t q_id = 0;
   for (auto query : queries) {
     fprintf(stderr, "Benchmarking query [%s]\n", query.c_str());
-    for(uint32_t i = 0; i < 10; i++) {
+    for(uint32_t i = 0; i < 1; i++) {
       std::set<int64_t> results;
       time_t start = get_timestamp();
       client.regexSearch(results, query);
