@@ -44,7 +44,6 @@ class BBExecutor : public RegExExecutor {
 };
 
 class PSExecutor : public RegExExecutor {
-
  public:
   typedef std::set<std::string> TokenSet;
   typedef std::string Token;
@@ -54,26 +53,47 @@ class PSExecutor : public RegExExecutor {
 
   void execute();
 
- private:
-  void compute(TokenSet &tokens, RegEx *regex);
+ protected:
+  virtual void compute(TokenSet &tokens, RegEx *regex) = 0;
 
   void regexUnion(TokenSet &union_tokens, TokenSet first, TokenSet second);
 
-  void regexConcat(TokenSet &concat_tokens, RegEx *regex, Token left_token);
+  virtual void regexConcat(TokenSet &concat_tokens, RegEx *regex,
+                           Token next_token) = 0;
 
-  void regexRepeatOneOrMore(TokenSet &repeat_tokens, RegEx *regex);
+  virtual void regexRepeatOneOrMore(TokenSet &repeat_tokens, RegEx *regex);
 
-  void regexRepeatOneOrMore(TokenSet &repeat_tokens, RegEx *regex,
-                            Token left_token);
+  virtual void regexRepeatOneOrMore(TokenSet &repeat_tokens, RegEx *regex,
+                                    Token next_token);
 
-  void regexRepeatMinToMax(TokenSet &repeat_tokens, RegEx *regex, int min,
-                           int max);
+  virtual void regexRepeatMinToMax(TokenSet &repeat_tokens, RegEx *regex,
+                                   int min, int max);
 
-  void regexRepeatMinToMax(TokenSet &repeat_tokens, RegEx *regex,
-                           Token left_token, int min, int max);
+  virtual void regexRepeatMinToMax(TokenSet &repeat_tokens, RegEx *regex,
+                                   Token next_token, int min, int max);
 
   TokenSet tokens_;
+};
 
+class PSFwdExecutor : public PSExecutor {
+
+ public:
+  PSFwdExecutor(dsl::TextIndex* s_core, RegEx *re);
+
+ private:
+  void compute(TokenSet &tokens, RegEx *regex);
+
+  void regexConcat(TokenSet &concat_tokens, RegEx *regex, Token left_token);
+};
+
+class PSBwdExecutor : public PSExecutor {
+ public:
+  PSBwdExecutor(dsl::TextIndex* s_core, RegEx *re);
+
+ private:
+  void compute(TokenSet &tokens, RegEx *regex);
+
+  void regexConcat(TokenSet &concat_tokens, RegEx *regex, Token right_token);
 };
 
 }

@@ -4,8 +4,7 @@
 
 #include "regex_parser.h"
 #include "regex_executor.h"
-
-#define MIN(a, b) ((a) < (b)) ? (a) : (b)
+#include "utils.h"
 
 pull_star::RegularExpression::RegularExpression(std::string regex,
                                                 dsl::TextIndex *text_idx,
@@ -13,7 +12,7 @@ pull_star::RegularExpression::RegularExpression(std::string regex,
   this->regex_ = regex;
   this->text_idx_ = text_idx;
   this->ex_type_ = ex_type;
-  parse();
+  getSubexpressions();
 }
 
 void pull_star::RegularExpression::execute() {
@@ -48,23 +47,36 @@ void pull_star::RegularExpression::wildCard(RegExResults &left,
   right = wildcard_res;
 }
 
-void pull_star::RegularExpression::subQuery(RegExResults &result, RegEx *r) {
+void pull_star::RegularExpression::subQuery(RegExResults &result,
+                                            std::string& sub_expression) {
   if (ex_type_ == ExecutorType::BlackBox) {
+    RegExParser p((char *) sub_expression.c_str());
+    RegEx *r = p.parse();
     BBExecutor executor(text_idx_, r);
     executor.execute();
     executor.getResults(result);
   } else {
-    PSExecutor executor(text_idx_, r);
-    executor.execute();
-    executor.getResults(result);
+    RegExParser p((char *) sub_expression.c_str());
+    RegEx *r = p.parse();
+    if(isSuffixed(r) || !isPrefixed(r)) {
+      PSBwdExecutor executor(text_idx_, r);
+      executor.execute();
+      executor.getResults(result);
+    } else {
+      PSFwdExecutor executor(text_idx_, r);
+      executor.execute();
+      executor.getResults(result);
+    }
   }
 }
 
 void pull_star::RegularExpression::explain() {
   fprintf(stderr, "***");
   for (auto subexp : sub_expressions_) {
-    explainSubExpression(subexp);
-    fprintf(stderr, "***\n");
+    RegExParser p((char*) subexp.c_str());
+    RegEx *r = p.parse();
+    explainSubExpression(r);
+    fprintf(stderr, "***");
   }
 }
 
@@ -122,22 +134,42 @@ void pull_star::RegularExpression::explainSubExpression(RegEx *re) {
   }
 }
 
-void pull_star::RegularExpression::parse() {
+void pull_star::RegularExpression::getSubexpressions() {
   // TODO: Right now this assumes we don't have nested ".*" operators
   // It would be nice to allow .* anywhere.
-  std::string delimiter = ".*";
+  Utils::split(sub_expressions_, regex_, ".*");
+}
 
-  size_t pos = 0;
-  std::string subexp;
-
-  while ((pos = regex_.find(delimiter)) != std::string::npos) {
-    subexp = regex_.substr(0, pos);
-    RegExParser parser((char *) subexp.c_str());
-    sub_expressions_.push_back(parser.parse());
-    regex_.erase(0, pos + delimiter.length());
+bool pull_star::RegularExpression::isPrefixed(RegEx* re) {
+  switch (re->getType()) {
+    case RegExType::Blank:
+      return false;
+    case RegExType::Primitive:
+      return (((RegExPrimitive *) re)->getPrimitiveType()
+          == RegExPrimitiveType::Mgram);
+    case RegExType::Repeat:
+      return isPrefixed(((RegExRepeat *) re)->getInternal());
+    case RegExType::Concat:
+      return isPrefixed(((RegExConcat *) re)->getLeft());
+    case RegExType::Union:
+      return isPrefixed(((RegExUnion *) re)->getFirst())
+          && isPrefixed(((RegExUnion *) re)->getSecond());
   }
+}
 
-  subexp = regex_;
-  RegExParser parser((char *) subexp.c_str());
-  sub_expressions_.push_back(parser.parse());
+bool pull_star::RegularExpression::isSuffixed(RegEx* re) {
+  switch (re->getType()) {
+    case RegExType::Blank:
+      return false;
+    case RegExType::Primitive:
+      return (((RegExPrimitive *) re)->getPrimitiveType()
+          == RegExPrimitiveType::Mgram);
+    case RegExType::Repeat:
+      return isSuffixed(((RegExRepeat *) re)->getInternal());
+    case RegExType::Concat:
+      return isSuffixed(((RegExConcat *) re)->getRight());
+    case RegExType::Union:
+      return isSuffixed(((RegExUnion *) re)->getFirst())
+          && isPrefixed(((RegExUnion *) re)->getSecond());
+  }
 }

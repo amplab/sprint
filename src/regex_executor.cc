@@ -181,16 +181,90 @@ pull_star::PSExecutor::PSExecutor(dsl::TextIndex* text_idx, RegEx* regex)
 
 void pull_star::PSExecutor::execute() {
   compute(tokens_, regex_);
-  for(Token token: tokens_) {
+  for (Token token : tokens_) {
     std::vector<int64_t> results;
     text_idx_->search(results, token);
-    for(int64_t offset: results) {
+    for (int64_t offset : results) {
       final_result_.insert(OffsetLength(offset, token.length()));
     }
   }
 }
 
-void pull_star::PSExecutor::compute(TokenSet &tokens, RegEx *regex) {
+void pull_star::PSExecutor::regexUnion(TokenSet &union_tokens, TokenSet first,
+                                       TokenSet second) {
+  std::set_union(first.begin(), first.end(), second.begin(), second.end(),
+                 std::inserter(union_tokens, union_tokens.begin()));
+}
+
+void pull_star::PSExecutor::regexRepeatOneOrMore(TokenSet &repeat_tokens,
+                                                 RegEx *regex) {
+  TokenSet tokens;
+  compute(tokens, regex);
+  if (tokens.empty())
+    return;
+  regexUnion(repeat_tokens, repeat_tokens, tokens);
+
+  for (auto token : tokens)
+    regexRepeatOneOrMore(repeat_tokens, regex, token);
+}
+
+void pull_star::PSExecutor::regexRepeatOneOrMore(TokenSet &repeat_tokens,
+                                                 RegEx *regex,
+                                                 Token previous_token) {
+  TokenSet concat_tokens;
+  regexConcat(concat_tokens, regex, previous_token);
+  if (concat_tokens.empty())
+    return;
+  regexUnion(repeat_tokens, repeat_tokens, concat_tokens);
+
+  for (auto concat_token : concat_tokens)
+    regexRepeatOneOrMore(repeat_tokens, regex, concat_token);
+}
+
+void pull_star::PSExecutor::regexRepeatMinToMax(TokenSet &repeat_tokens,
+                                                RegEx *regex, int min,
+                                                int max) {
+  min = (min > 0) ? min - 1 : 0;
+  max = (max > 0) ? max - 1 : 0;
+
+  TokenSet tokens;
+  compute(tokens, regex);
+  if (tokens.empty())
+    return;
+
+  if (!min)
+    regexUnion(repeat_tokens, repeat_tokens, tokens);
+
+  if (max)
+    for (auto token : tokens)
+      regexRepeatMinToMax(repeat_tokens, regex, token, min, max);
+}
+
+void pull_star::PSExecutor::regexRepeatMinToMax(TokenSet &repeat_tokens,
+                                                RegEx *regex,
+                                                Token previous_token, int min,
+                                                int max) {
+  min = (min > 0) ? min - 1 : 0;
+  max = (max > 0) ? max - 1 : 0;
+
+  TokenSet concat_tokens;
+  regexConcat(concat_tokens, regex, previous_token);
+  if (concat_tokens.empty())
+    return;
+
+  if (!min)
+    regexUnion(repeat_tokens, repeat_tokens, concat_tokens);
+
+  if (max)
+    for (auto concat_token : concat_tokens)
+      regexRepeatMinToMax(repeat_tokens, regex, concat_token, min, max);
+}
+
+pull_star::PSFwdExecutor::PSFwdExecutor(dsl::TextIndex* text_idx, RegEx* regex)
+    : PSExecutor(text_idx, regex) {
+}
+
+void pull_star::PSFwdExecutor::compute(TokenSet &tokens, RegEx *regex) {
   switch (regex->getType()) {
     case RegExType::Blank: {
       break;
@@ -264,14 +338,8 @@ void pull_star::PSExecutor::compute(TokenSet &tokens, RegEx *regex) {
   }
 }
 
-void pull_star::PSExecutor::regexUnion(TokenSet &union_tokens, TokenSet first,
-                                       TokenSet second) {
-  std::set_union(first.begin(), first.end(), second.begin(), second.end(),
-                 std::inserter(union_tokens, union_tokens.begin()));
-}
-
-void pull_star::PSExecutor::regexConcat(TokenSet &concat_tokens, RegEx *regex,
-                                        Token left_token) {
+void pull_star::PSFwdExecutor::regexConcat(TokenSet &concat_tokens,
+                                           RegEx *regex, Token left_token) {
   switch (regex->getType()) {
     case RegExType::Blank: {
       break;
@@ -351,71 +419,163 @@ void pull_star::PSExecutor::regexConcat(TokenSet &concat_tokens, RegEx *regex,
   }
 }
 
-void pull_star::PSExecutor::regexRepeatOneOrMore(TokenSet &repeat_tokens,
-                                                 RegEx *regex) {
-  TokenSet results;
-  compute(results, regex);
-  if (results.empty())
-    return;
-  regexUnion(repeat_tokens, repeat_tokens, results);
-
-  for (auto result : results)
-    regexRepeatOneOrMore(repeat_tokens, regex, result);
+pull_star::PSBwdExecutor::PSBwdExecutor(dsl::TextIndex* text_idx, RegEx* regex)
+    : PSExecutor(text_idx, regex) {
 }
 
-void pull_star::PSExecutor::regexRepeatOneOrMore(TokenSet &repeat_tokens,
-                                                 RegEx *regex,
-                                                 Token left_token) {
-  if (!text_idx_->contains(left_token))
-    return;
+void pull_star::PSBwdExecutor::compute(TokenSet &tokens, RegEx *regex) {
+  switch (regex->getType()) {
+    case RegExType::Blank: {
+      break;
+    }
+    case RegExType::Primitive: {
+      RegExPrimitive *primitive = (RegExPrimitive *) regex;
+      switch (primitive->getPrimitiveType()) {
+        case RegExPrimitiveType::Mgram: {
+          tokens.insert(primitive->getPrimitive());
+          break;
+        }
+        case RegExPrimitiveType::Dot: {
+          for (char c = 32; c < 127; c++) {
+            if (c == '\n')
+              continue;
 
-  TokenSet concat_results;
-  regexConcat(concat_results, regex, left_token);
-  if (concat_results.empty())
-    return;
-  regexUnion(repeat_tokens, repeat_tokens, concat_results);
-
-  for (auto result : concat_results)
-    regexRepeatOneOrMore(repeat_tokens, regex, result);
+            std::string token = std::string(1, c);
+            if (text_idx_->contains(token)) {
+              tokens.insert(token);
+            }
+          }
+          break;
+        }
+        case RegExPrimitiveType::Range: {
+          for (char c : primitive->getPrimitive()) {
+            std::string token = std::string(1, c);
+            if (text_idx_->contains(token)) {
+              tokens.insert(token);
+            }
+          }
+          break;
+        }
+      }
+      break;
+    }
+    case RegExType::Union: {
+      TokenSet first_res, second_res;
+      compute(first_res, ((RegExUnion *) regex)->getFirst());
+      compute(second_res, ((RegExUnion *) regex)->getSecond());
+      regexUnion(tokens, first_res, second_res);
+      break;
+    }
+    case RegExType::Concat: {
+      TokenSet right_results;
+      compute(right_results, ((RegExConcat *) regex)->getRight());
+      for (auto right_result : right_results) {
+        TokenSet temp;
+        regexConcat(temp, ((RegExConcat *) regex)->getLeft(), right_result);
+        regexUnion(tokens, tokens, temp);
+      }
+      break;
+    }
+    case RegExType::Repeat: {
+      RegExRepeat *rep_r = ((RegExRepeat *) regex);
+      switch (rep_r->getRepeatType()) {
+        case RegExRepeatType::ZeroOrMore: {
+          regexRepeatOneOrMore(tokens, rep_r->getInternal());
+          break;
+        }
+        case RegExRepeatType::OneOrMore: {
+          regexRepeatOneOrMore(tokens, rep_r->getInternal());
+          break;
+        }
+        case RegExRepeatType::MinToMax: {
+          regexRepeatMinToMax(tokens, rep_r->getInternal(), rep_r->getMin(),
+                              rep_r->getMax());
+        }
+      }
+      break;
+    }
+  }
 }
 
-void pull_star::PSExecutor::regexRepeatMinToMax(TokenSet &repeat_tokens,
-                                                RegEx *regex, int min,
-                                                int max) {
-  min = (min > 0) ? min - 1 : 0;
-  max = (max > 0) ? max - 1 : 0;
+void pull_star::PSBwdExecutor::regexConcat(TokenSet &concat_tokens,
+                                           RegEx *regex, Token right_token) {
+  switch (regex->getType()) {
+    case RegExType::Blank: {
+      break;
+    }
+    case RegExType::Primitive: {
+      RegExPrimitive *primitive = (RegExPrimitive *) regex;
+      switch (primitive->getPrimitiveType()) {
+        case RegExPrimitiveType::Mgram: {
+          std::string token = primitive->getPrimitive() + right_token;
+          if (text_idx_->contains(token)) {
+            concat_tokens.insert(token);
+          }
 
-  TokenSet results;
-  compute(results, regex);
-  if (results.empty())
-    return;
-
-  if (!min)
-    regexUnion(repeat_tokens, repeat_tokens, results);
-
-  if (max)
-    for (auto result : results)
-      regexRepeatMinToMax(repeat_tokens, regex, result, min, max);
-}
-
-void pull_star::PSExecutor::regexRepeatMinToMax(TokenSet &repeat_tokens,
-                                                RegEx *regex, Token left_token,
-                                                int min, int max) {
-  min = (min > 0) ? min - 1 : 0;
-  max = (max > 0) ? max - 1 : 0;
-
-  if (!text_idx_->contains(left_token))
-    return;
-
-  TokenSet concat_results;
-  regexConcat(concat_results, regex, left_token);
-  if (concat_results.empty())
-    return;
-
-  if (!min)
-    regexUnion(repeat_tokens, repeat_tokens, concat_results);
-
-  if (max)
-    for (auto result : concat_results)
-      regexRepeatMinToMax(repeat_tokens, regex, result, min, max);
+          break;
+        }
+        case RegExPrimitiveType::Dot: {
+          for (char c = 32; c < 127; c++) {
+            if (c == '\n')
+              continue;
+            std::string token = c + right_token;
+            if (text_idx_->contains(token)) {
+              concat_tokens.insert(token);
+            }
+          }
+          break;
+        }
+        case RegExPrimitiveType::Range: {
+          for (char c : primitive->getPrimitive()) {
+            std::string token = c + right_token;
+            if (text_idx_->contains(token)) {
+              concat_tokens.insert(token);
+            }
+          }
+          break;
+        }
+      }
+      break;
+    }
+    case RegExType::Union: {
+      TokenSet res1, res2;
+      regexConcat(res1, ((RegExUnion *) regex)->getFirst(), right_token);
+      regexConcat(res2, ((RegExUnion *) regex)->getSecond(), right_token);
+      regexUnion(concat_tokens, res1, res2);
+      break;
+    }
+    case RegExType::Concat: {
+      TokenSet left_right_results;
+      regexConcat(left_right_results, ((RegExConcat *) regex)->getRight(),
+                  right_token);
+      for (auto left_right_result : left_right_results) {
+        TokenSet temp;
+        regexConcat(temp, ((RegExConcat *) regex)->getLeft(),
+                    left_right_result);
+        regexUnion(concat_tokens, concat_tokens, temp);
+      }
+      break;
+    }
+    case RegExType::Repeat: {
+      RegExRepeat *rep_r = ((RegExRepeat *) regex);
+      switch (rep_r->getRepeatType()) {
+        case RegExRepeatType::ZeroOrMore: {
+          regexRepeatOneOrMore(concat_tokens, rep_r->getInternal(),
+                               right_token);
+          concat_tokens.insert(right_token);
+          break;
+        }
+        case RegExRepeatType::OneOrMore: {
+          regexRepeatOneOrMore(concat_tokens, rep_r->getInternal(),
+                               right_token);
+          break;
+        }
+        case RegExRepeatType::MinToMax: {
+          regexRepeatMinToMax(concat_tokens, rep_r->getInternal(), right_token,
+                              rep_r->getMin(), rep_r->getMax());
+        }
+      }
+      break;
+    }
+  }
 }

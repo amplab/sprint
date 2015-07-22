@@ -22,7 +22,7 @@ class RegularExpression {
                     ExecutorType ex_type = ExecutorType::PullStar);
 
   void execute();
-  void subQuery(RegExResults &result, RegEx *r);
+  void subQuery(RegExResults &result, std::string& sub_expression);
   void explain();
   void showResults(size_t limit);
   void getResults(RegExResults &results);
@@ -30,10 +30,13 @@ class RegularExpression {
  private:
   void wildCard(RegExResults &left, RegExResults &right);
   void explainSubExpression(RegEx *re);
-  void parse();
+  void getSubexpressions();
+  
+  bool isPrefixed(RegEx *re);
+  bool isSuffixed(RegEx *re);
 
   std::string regex_;
-  std::vector<RegEx *> sub_expressions_;
+  std::vector<std::string> sub_expressions_;
   dsl::TextIndex *text_idx_;
   ExecutorType ex_type_;
 
