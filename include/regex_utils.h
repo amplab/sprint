@@ -1,5 +1,5 @@
-#ifndef PULL_STAR_UTILS_H_
-#define PULL_STAR_UTILS_H_
+#ifndef PULL_STAR_REGEX_UTILS_H_
+#define PULL_STAR_REGEX_UTILS_H_
 
 #include <vector>
 #include <string>
@@ -16,4 +16,4 @@ class Utils {
 
 }
 
-#endif // PULL_STAR_UTILS_H_
+#endif // PULL_STAR_REGEX_UTILS_H_
