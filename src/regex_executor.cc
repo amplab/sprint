@@ -101,7 +101,8 @@ void pull_star::BBExecutor::regexConcat(RegExResult& concat_result,
   RegExResultIterator left_it, right_it;
   for (left_it = left.begin(), right_it = right.begin();
       left_it != left.end() && right_it != right.end(); left_it++) {
-    while (right_it != right.end() && right_it->first <= left_it->first)
+    while (right_it != right.end()
+        && right_it->first < left_it->first + left_it->second)
       right_it++;
     if (right_it == right.end())
       break;
@@ -260,7 +261,8 @@ void pull_star::PSExecutor::regexRepeatMinToMax(TokenSet &repeat_tokens,
       regexRepeatMinToMax(repeat_tokens, regex, concat_token, min, max);
 }
 
-pull_star::PSFwdExecutor::PSFwdExecutor(const dsl::TextIndex* text_idx, RegEx* regex)
+pull_star::PSFwdExecutor::PSFwdExecutor(const dsl::TextIndex* text_idx,
+                                        RegEx* regex)
     : PSExecutor(text_idx, regex) {
 }
 
@@ -419,7 +421,8 @@ void pull_star::PSFwdExecutor::regexConcat(TokenSet &concat_tokens,
   }
 }
 
-pull_star::PSBwdExecutor::PSBwdExecutor(const dsl::TextIndex* text_idx, RegEx* regex)
+pull_star::PSBwdExecutor::PSBwdExecutor(const dsl::TextIndex* text_idx,
+                                        RegEx* regex)
     : PSExecutor(text_idx, regex) {
 }
 

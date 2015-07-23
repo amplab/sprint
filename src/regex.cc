@@ -231,7 +231,7 @@ void pull_star::RegularExpression::subQuery(RegExResults &result,
               left_it != last_results.end() && right_it != cur_results.end();
               left_it++) {
             while (right_it != cur_results.end()
-                && right_it->first <= left_it->first)
+                && right_it->first < left_it->first + left_it->second)
               right_it++;
             if (right_it == cur_results.end())
               break;
