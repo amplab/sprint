@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-pull_star::RegExExecutor::RegExExecutor(dsl::TextIndex *text_idx,
+pull_star::RegExExecutor::RegExExecutor(const dsl::TextIndex *text_idx,
                                         RegEx *regex) {
   text_idx_ = text_idx;
   regex_ = regex;
@@ -15,7 +15,7 @@ void pull_star::RegExExecutor::getResults(RegExResult& result) {
   result = final_result_;
 }
 
-pull_star::BBExecutor::BBExecutor(dsl::TextIndex *text_idx,
+pull_star::BBExecutor::BBExecutor(const dsl::TextIndex *text_idx,
                                   pull_star::RegEx* regex)
     : RegExExecutor(text_idx, regex) {
 }
@@ -175,7 +175,7 @@ void pull_star::BBExecutor::regexRepeat(RegExResult& repeat_result,
   }
 }
 
-pull_star::PSExecutor::PSExecutor(dsl::TextIndex* text_idx, RegEx* regex)
+pull_star::PSExecutor::PSExecutor(const dsl::TextIndex* text_idx, RegEx* regex)
     : RegExExecutor(text_idx, regex) {
 }
 
@@ -260,7 +260,7 @@ void pull_star::PSExecutor::regexRepeatMinToMax(TokenSet &repeat_tokens,
       regexRepeatMinToMax(repeat_tokens, regex, concat_token, min, max);
 }
 
-pull_star::PSFwdExecutor::PSFwdExecutor(dsl::TextIndex* text_idx, RegEx* regex)
+pull_star::PSFwdExecutor::PSFwdExecutor(const dsl::TextIndex* text_idx, RegEx* regex)
     : PSExecutor(text_idx, regex) {
 }
 
@@ -419,7 +419,7 @@ void pull_star::PSFwdExecutor::regexConcat(TokenSet &concat_tokens,
   }
 }
 
-pull_star::PSBwdExecutor::PSBwdExecutor(dsl::TextIndex* text_idx, RegEx* regex)
+pull_star::PSBwdExecutor::PSBwdExecutor(const dsl::TextIndex* text_idx, RegEx* regex)
     : PSExecutor(text_idx, regex) {
 }
 

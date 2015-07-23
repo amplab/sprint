@@ -13,7 +13,7 @@ class RegExExecutor {
   typedef std::set<OffsetLength> RegExResult;
   typedef RegExResult::iterator RegExResultIterator;
 
-  RegExExecutor(dsl::TextIndex *text_idx, pull_star::RegEx *regex);
+  RegExExecutor(const dsl::TextIndex *text_idx, pull_star::RegEx *regex);
 
   virtual ~RegExExecutor();
 
@@ -22,14 +22,14 @@ class RegExExecutor {
   virtual void getResults(RegExResult &result);
 
  protected:
-  dsl::TextIndex *text_idx_;
+  const dsl::TextIndex *text_idx_;
   RegEx *regex_;
   std::set<OffsetLength> final_result_;
 };
 
 class BBExecutor : public RegExExecutor {
  public:
-  BBExecutor(dsl::TextIndex *text_idx, pull_star::RegEx* regex);
+  BBExecutor(const dsl::TextIndex *text_idx, pull_star::RegEx* regex);
 
   void execute();
  private:
@@ -49,7 +49,7 @@ class PSExecutor : public RegExExecutor {
   typedef std::string Token;
   typedef TokenSet::iterator ResultIterator;
 
-  PSExecutor(dsl::TextIndex* s_core, RegEx *re);
+  PSExecutor(const dsl::TextIndex* s_core, RegEx *re);
 
   void execute();
 
@@ -78,7 +78,7 @@ class PSExecutor : public RegExExecutor {
 class PSFwdExecutor : public PSExecutor {
 
  public:
-  PSFwdExecutor(dsl::TextIndex* s_core, RegEx *re);
+  PSFwdExecutor(const dsl::TextIndex* s_core, RegEx *re);
 
  private:
   void compute(TokenSet &tokens, RegEx *regex);
@@ -88,7 +88,7 @@ class PSFwdExecutor : public PSExecutor {
 
 class PSBwdExecutor : public PSExecutor {
  public:
-  PSBwdExecutor(dsl::TextIndex* s_core, RegEx *re);
+  PSBwdExecutor(const dsl::TextIndex* s_core, RegEx *re);
 
  private:
   void compute(TokenSet &tokens, RegEx *regex);
