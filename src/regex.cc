@@ -171,7 +171,6 @@ void pull_star::RegularExpression::subQuery(RegExResults &result,
         RegExResults cur_results;
         RegExParser p((char *) ssexp.c_str());
         RegEx *r = p.parse();
-        explainSubExpression(r);
         BBExecutor executor(text_idx_, r);
         executor.execute();
         executor.getResults(cur_results);
