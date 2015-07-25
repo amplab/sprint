@@ -11,6 +11,7 @@
 #include "text/compressed_suffix_tree.h"
 #include "text/suffix_tree_index.h"
 #include "text/suffix_array_index.h"
+#include "text/ngram_index.h"
 
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
@@ -65,6 +66,14 @@ class ShardHandler : virtual public pull_star_thrift::ShardIf {
         std::ofstream out(input_file_ + ".asa");
         text_idx_->serialize(out);
         out.close();
+      } else if (data_structure_ == 4) {
+        fprintf(stderr, "Constructing ngram index...\n");
+        text_idx_ = new dsl::NGramIndex(input_text);
+
+        // Serialize to disk for future use.
+        std::ofstream out(input_file_ + ".ngm");
+        text_idx_->serialize(out);
+        out.close();
       } else {
         fprintf(stderr, "Data structure %d not supported yet.\n",
                 data_structure_);
@@ -100,6 +109,12 @@ class ShardHandler : virtual public pull_star_thrift::ShardIf {
         fprintf(stderr, "Loading suffix array from file...\n");
         std::ifstream input_stream(input_file_ + ".asa");
         text_idx_ = new dsl::AugmentedSuffixArrayIndex();
+        text_idx_->deserialize(input_stream);
+        input_stream.close();
+      } else if (data_structure_ == 4) {
+        fprintf(stderr, "Loading ngram index from file...\n");
+        std::ifstream input_stream(input_file_ + ".ngm");
+        text_idx_ = new dsl::NGramIndex();
         text_idx_->deserialize(input_stream);
         input_stream.close();
       } else {
