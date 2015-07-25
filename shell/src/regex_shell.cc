@@ -10,6 +10,7 @@
 #include "text/suffix_tree_index.h"
 #include "text/text_index.h"
 #include "text/suffix_array_index.h"
+#include "text/ngram_index.h"
 #include "benchmark.h"
 
 void print_usage(char *exec) {
@@ -86,6 +87,13 @@ int main(int argc, char **argv) {
       std::ofstream out(input_file + ".asa");
       text_idx_->serialize(out);
       out.close();
+    } else if (data_structure == 4) {
+      text_idx_ = new dsl::NGramIndex(input_text);
+
+      // Serialize to disk for future use.
+      std::ofstream out(input_file + ".ngm");
+      text_idx_->serialize(out);
+      out.close();
     } else {
       fprintf(stderr, "Data structure %d not supported yet.\n", data_structure);
       exit(0);
@@ -111,6 +119,11 @@ int main(int argc, char **argv) {
     } else if (data_structure == 3) {
       std::ifstream input_stream(input_file + ".asa");
       text_idx_ = new dsl::AugmentedSuffixArrayIndex();
+      text_idx_->deserialize(input_stream);
+      input_stream.close();
+    } else if (data_structure == 4) {
+      std::ifstream input_stream(input_file + ".ngm");
+      text_idx_ = new dsl::NGramIndex();
       text_idx_->deserialize(input_stream);
       input_stream.close();
     } else {
