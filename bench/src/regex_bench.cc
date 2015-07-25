@@ -141,6 +141,7 @@ void pull_star_bench::RegExBench::benchRegex(
       time_t end = get_timestamp();
       time_t tot = end - start;
       result_stream << q_id << "\t" << i << "\t" << results.size() << "\t" << tot << "\n";
+      result_stream.flush();
       fprintf(stderr, "Iteration %u, query %u, result size = %zu, time = %llu us\n", i, q_id, results.size(), tot);
     }
     q_id++;
