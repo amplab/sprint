@@ -12,6 +12,7 @@
 #include "text/suffix_tree_index.h"
 #include "text/suffix_array_index.h"
 #include "text/ngram_index.h"
+#include "regex_executor.h"
 
 pull_star_bench::RegExBench::RegExBench(const std::string& input_file,
                                         bool construct, int data_structure,
@@ -107,7 +108,7 @@ void pull_star_bench::RegExBench::benchRegex(const std::string& query_file,
   uint32_t q_id = 0;
   for (auto query : queries) {
     fprintf(stderr, "Benchmarking query [%s]\n", query.c_str());
-    for(uint32_t i = 0; i < 10; i++) {
+    for (uint32_t i = 0; i < 10; i++) {
       pull_star::RegularExpression regex(query, text_idx_, executor_type_);
       std::set<std::pair<size_t, size_t>> results;
       time_t start = get_timestamp();
@@ -115,8 +116,11 @@ void pull_star_bench::RegExBench::benchRegex(const std::string& query_file,
       regex.getResults(results);
       time_t end = get_timestamp();
       time_t tot = end - start;
-      result_stream << q_id << "\t" << i << "\t" << results.size() << "\t" << tot << "\n";
-      fprintf(stderr, "Iteration %u, query %u, result size = %zu, time = %llu us\n", i, q_id, results.size(), tot);
+      result_stream << q_id << "\t" << i << "\t" << results.size() << "\t"
+                    << tot << "\n";
+      fprintf(stderr,
+              "Iteration %u, query %u, result size = %zu, time = %llu us\n", i,
+              q_id, results.size(), tot);
     }
     q_id++;
   }
@@ -134,15 +138,18 @@ void pull_star_bench::RegExBench::benchRegex(
   uint32_t q_id = 0;
   for (auto query : queries) {
     fprintf(stderr, "Benchmarking query [%s]\n", query.c_str());
-    for(uint32_t i = 0; i < 1; i++) {
+    for (uint32_t i = 0; i < 1; i++) {
       std::set<int64_t> results;
       time_t start = get_timestamp();
       client.regexSearch(results, query);
       time_t end = get_timestamp();
       time_t tot = end - start;
-      result_stream << q_id << "\t" << i << "\t" << results.size() << "\t" << tot << "\n";
+      result_stream << q_id << "\t" << i << "\t" << results.size() << "\t"
+                    << tot << "\n";
       result_stream.flush();
-      fprintf(stderr, "Iteration %u, query %u, result size = %zu, time = %llu us\n", i, q_id, results.size(), tot);
+      fprintf(stderr,
+              "Iteration %u, query %u, result size = %zu, time = %llu us\n", i,
+              q_id, results.size(), tot);
     }
     q_id++;
   }
@@ -151,7 +158,7 @@ void pull_star_bench::RegExBench::benchRegex(
 }
 
 void pull_star_bench::RegExBench::benchSearch(const std::string& query_file,
-                                             const std::string& result_path) {
+                                              const std::string& result_path) {
   std::vector<std::string> queries = readQueryFile(query_file);
   std::ofstream result_stream(result_path);
 
@@ -186,6 +193,90 @@ void pull_star_bench::RegExBench::benchSearch(
   }
 
   result_stream.close();
+}
+
+void pull_star_bench::RegExBench::benchBreakdown(
+    const std::string &query_file, const std::string &result_path) {
+  std::vector<std::string> queries1 = readQueryFile(query_file + ".1");
+  std::vector<std::string> queries2 = readQueryFile(query_file + ".2");
+  std::ofstream wildcard_stream(result_path + ".wildcard");
+  std::ofstream union_stream(result_path + ".union");
+  std::ofstream concat_stream(result_path + ".concat");
+  std::ofstream repeat_stream(result_path + ".repeat");
+
+  time_t start, end, diff1, diff2;
+  for (auto query1 : queries1) {
+    for (auto query2 : queries2) {
+      typedef pull_star::RegExExecutor::RegExResult RRes;
+      typedef pull_star::RegExExecutor::OffsetLength REnt;
+
+      // Search time
+      std::vector<int64_t> res1, res2;
+      start = get_timestamp();
+      text_idx_->search(res1, query1);
+      end = get_timestamp();
+      diff1 = end - start;
+
+      start = get_timestamp();
+      text_idx_->search(res2, query2);
+      end = get_timestamp();
+      diff2 = end - start;
+
+      wildcard_stream << res1.size() << "\t" << res2.size() << "\t" << (diff1 + diff2) << "\t";
+      union_stream << res1.size() << "\t" << res2.size() << "\t" << (diff1 + diff2) << "\t";
+      concat_stream << res1.size() << "\t" << res2.size() << "\t" << (diff1 + diff2) << "\t";
+      repeat_stream << res1.size() << "\t" << diff1 << "\t";
+
+      // Sort time
+      RRes sres1, sres2;
+      start = get_timestamp();
+      for (auto res : res1) {
+        sres1.insert(REnt(res, query1.length()));
+      }
+      end = get_timestamp();
+      diff1 = end - start;
+
+      start = get_timestamp();
+      for (auto res : res2) {
+        sres2.insert(REnt(res, query2.length()));
+      }
+      end = get_timestamp();
+      diff2 = end - start;
+
+      wildcard_stream << (diff1 + diff2) << "\t";
+      union_stream << (diff1 + diff2) << "\t";
+      concat_stream << (diff1 + diff2) << "\t";
+      repeat_stream << diff1 << "\t";
+
+      // Combine time
+      RRes w_res, u_res, c_res, r_res;
+      pull_star::BBExecutor b;
+
+      start = get_timestamp();
+      b.regexWildcard(w_res, sres1, sres2);
+      end = get_timestamp();
+      diff1 = end - start;
+      wildcard_stream << diff1 << "\t" << w_res.size() << "\n";
+
+      start = get_timestamp();
+      b.regexUnion(u_res, sres1, sres2);
+      end = get_timestamp();
+      diff1 = end - start;
+      union_stream << diff1 << "\t" << u_res.size() << "\n";
+
+      start = get_timestamp();
+      b.regexConcat(c_res, sres1, sres2);
+      end = get_timestamp();
+      diff1 = end - start;
+      concat_stream << diff1 << "\t" << c_res.size() << "\n";
+
+      start = get_timestamp();
+      b.regexRepeat(r_res, sres1, pull_star::RegExRepeatType::OneOrMore);
+      end = get_timestamp();
+      diff1 = end - start;
+      repeat_stream << diff1 << "\t" << r_res.size() << "\n";
+    }
+  }
 }
 
 void print_usage(char *exec) {
@@ -269,10 +360,12 @@ int main(int argc, char **argv) {
 
     bench = new pull_star_bench::RegExBench(input_file, construct,
                                             data_structure, executor_type);
-    if(benchmark == "latency-regex") {
+    if (benchmark == "latency-regex") {
       bench->benchRegex(query_file, res_file);
-    } else if(benchmark == "latency-search") {
+    } else if (benchmark == "latency-search") {
       bench->benchSearch(query_file, res_file);
+    } else if (benchmark == "latency-breakdown") {
+      bench->benchBreakdown(query_file, res_file);
     } else {
       fprintf(stderr, "Unsupported benchmark %s.\n", benchmark.c_str());
       exit(0);
@@ -290,9 +383,9 @@ int main(int argc, char **argv) {
       pull_star_thrift::AggregatorClient client(protocol);
       transport->open();
       bench = new pull_star_bench::RegExBench(executor_type);
-      if(benchmark == "latency-regex") {
+      if (benchmark == "latency-regex") {
         bench->benchRegex(client, query_file, res_file);
-      } else if(benchmark == "latency-search") {
+      } else if (benchmark == "latency-search") {
         bench->benchSearch(client, query_file, res_file);
       } else {
         fprintf(stderr, "Unsupported benchmark %s.\n", benchmark.c_str());

@@ -15,6 +15,10 @@ void pull_star::RegExExecutor::getResults(RegExResult& result) {
   result = final_result_;
 }
 
+pull_star::BBExecutor::BBExecutor()
+    : RegExExecutor(NULL, NULL) {
+}
+
 pull_star::BBExecutor::BBExecutor(const dsl::TextIndex *text_idx,
                                   pull_star::RegEx* regex)
     : RegExExecutor(text_idx, regex) {

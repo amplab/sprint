@@ -29,10 +29,10 @@ class RegExExecutor {
 
 class BBExecutor : public RegExExecutor {
  public:
+  BBExecutor();
   BBExecutor(const dsl::TextIndex *text_idx, pull_star::RegEx* regex);
 
   void execute();
- private:
   void compute(RegExResult& result, RegEx* regex);
   void regexMgram(RegExResult& result, RegExPrimitive* regex);
   void regexUnion(RegExResult& union_result, RegExResult& first,
@@ -41,6 +41,20 @@ class BBExecutor : public RegExExecutor {
                    RegExResult& right);
   void regexRepeat(RegExResult& repeat_result, RegExResult& internal,
                    RegExRepeatType repeat_type, int min = -1, int max = -1);
+
+  void regexWildcard(RegExResult& wildcard_res, RegExResult &left,
+                RegExResult &right) {
+    RegExResultIterator left_it, right_it;
+    for (left_it = left.begin(); left_it != left.end(); left_it++) {
+      OffsetLength search_candidate(left_it->first + left_it->second, 0);
+      RegExResultIterator first_entry = right.lower_bound(search_candidate);
+      for (right_it = first_entry; right_it != right.end(); right_it++) {
+        size_t offset = left_it->first;
+        size_t length = right_it->first - left_it->first + right_it->second;
+        wildcard_res.insert(OffsetLength(offset, length));
+      }
+    }
+  }
 };
 
 class PSExecutor : public RegExExecutor {
