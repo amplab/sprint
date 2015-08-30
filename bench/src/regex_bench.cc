@@ -223,9 +223,13 @@ void pull_star_bench::RegExBench::benchBreakdown(
       diff2 = end - start;
 
       wildcard_stream << res1.size() << "\t" << res2.size() << "\t" << (diff1 + diff2) << "\t";
+      wildcard_stream.flush();
       union_stream << res1.size() << "\t" << res2.size() << "\t" << (diff1 + diff2) << "\t";
+      union_stream.flush();
       concat_stream << res1.size() << "\t" << res2.size() << "\t" << (diff1 + diff2) << "\t";
+      concat_stream.flush();
       repeat_stream << res1.size() << "\t" << diff1 << "\t";
+      repeat_stream.flush();
 
       // Sort time
       RRes sres1, sres2;
@@ -244,9 +248,13 @@ void pull_star_bench::RegExBench::benchBreakdown(
       diff2 = end - start;
 
       wildcard_stream << (diff1 + diff2) << "\t";
+      wildcard_stream.flush();
       union_stream << (diff1 + diff2) << "\t";
+      union_stream.flush();
       concat_stream << (diff1 + diff2) << "\t";
+      concat_stream.flush();
       repeat_stream << diff1 << "\t";
+      repeat_stream.flush();
 
       // Combine time
       RRes w_res, u_res, c_res, r_res;
@@ -257,24 +265,28 @@ void pull_star_bench::RegExBench::benchBreakdown(
       end = get_timestamp();
       diff1 = end - start;
       wildcard_stream << diff1 << "\t" << w_res.size() << "\n";
+      wildcard_stream.flush();
 
       start = get_timestamp();
       b.regexUnion(u_res, sres1, sres2);
       end = get_timestamp();
       diff1 = end - start;
       union_stream << diff1 << "\t" << u_res.size() << "\n";
+      union_stream.flush();
 
       start = get_timestamp();
       b.regexConcat(c_res, sres1, sres2);
       end = get_timestamp();
       diff1 = end - start;
       concat_stream << diff1 << "\t" << c_res.size() << "\n";
+      concat_stream.flush();
 
       start = get_timestamp();
       b.regexRepeat(r_res, sres1, pull_star::RegExRepeatType::OneOrMore);
       end = get_timestamp();
       diff1 = end - start;
       repeat_stream << diff1 << "\t" << r_res.size() << "\n";
+      repeat_stream.flush();
     }
   }
 }
