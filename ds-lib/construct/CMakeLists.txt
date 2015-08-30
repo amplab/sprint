@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(pull-star-shell CXX)
+project(ds-lib-construct CXX)
 
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
@@ -19,8 +19,6 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 file(MAKE_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
-set(EXTERNAL_INCLUDE ../ds-lib/bench/include ../ds-lib/external/cst_v_1_1)
 file(GLOB SOURCE_FILES src/*.cc)
-include_directories(${EXTERNAL_INCLUDE})
-add_executable(rxshell ${SOURCE_FILES})
-target_link_libraries(rxshell pullstar)
+add_executable(construct ${SOURCE_FILES})
+target_link_libraries(construct ds)

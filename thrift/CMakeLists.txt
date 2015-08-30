@@ -35,7 +35,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 file(MAKE_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 
-set(EXTERNAL_INCLUDE ../external/ds-lib/bench/include ../external/ds-lib/external/cst_v_1_1)
+set(EXTERNAL_INCLUDE ../ds-lib/bench/include ../ds-lib/external/cst_v_1_1)
 include_directories(${EXTERNAL_INCLUDE} ${INCLUDE_DIR})
 add_executable(rxshard ${SHARD_SOURCES})
 add_executable(rxaggregator ${AGGREGATOR_SOURCES})

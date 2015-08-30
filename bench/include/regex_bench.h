@@ -30,6 +30,9 @@ class RegExBench : public dsl_bench::Benchmark {
                   const std::string& query_file,
                   const std::string& result_path);
 
+  void benchBreakdown(const std::string& query_file,
+                      const std::string& result_path);
+
  private:
   dsl::TextIndex *text_idx_;
   pull_star::RegularExpression::ExecutorType executor_type_;
