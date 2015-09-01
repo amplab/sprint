@@ -4,4 +4,4 @@ TRUCK|AIR
 \|TRUCK\|
 \|AIR\|
 \|(TRUCK|AIR)\|
-(|TRUCK\|\|AIR\|)
+(\|TRUCK\||\|AIR\|)
