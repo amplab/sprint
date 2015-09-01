@@ -29,6 +29,15 @@ class RegExExecutor {
 
 class BBExecutor : public RegExExecutor {
  public:
+  struct offset_length_comparator {
+    bool operator() (const OffsetLength& lhs, const OffsetLength& rhs) {
+      return (lhs.first + lhs.second) < (rhs.first + rhs.second);
+    }
+  };
+
+  typedef std::set<OffsetLength, offset_length_comparator> RegExEndSortedSet;
+  typedef RegExEndSortedSet::iterator RegExEndSortedIterator;
+
   BBExecutor();
   BBExecutor(const dsl::TextIndex *text_idx, pull_star::RegEx* regex);
 
