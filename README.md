@@ -106,7 +106,7 @@ we use thrift as the communication system between different processes which run
 on different cores. To this end, the query engine must be started as a service
 before running the benchmarks.
 
-Before starting the service, modify parameters in [conf/pullstar-env.sh].
+Before starting the service, modify parameters in [conf/pullstar-env.sh](conf/pullstar-env.sh).
 Note that the `DATA\_PATH` must point to the directory containing the different
 shards (each shard would correspond to a different core) encoded with the 
 correct `DATA\_STRUCTURE`. Each shard must be named 
