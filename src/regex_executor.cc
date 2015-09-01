@@ -102,9 +102,11 @@ void pull_star::BBExecutor::regexUnion(RegExResult& union_results,
 
 void pull_star::BBExecutor::regexConcat(RegExResult& concat_result,
                                         RegExResult& left, RegExResult& right) {
-  RegExResultIterator left_it, right_it;
-  for (left_it = left.begin(), right_it = right.begin();
-      left_it != left.end() && right_it != right.end(); left_it++) {
+  RegExEndSortedSet left_es(left.begin(), left.end());
+  RegExResultIterator right_it;
+  RegExEndSortedIterator left_it;
+  for (left_it = left_es.begin(), right_it = right.begin();
+      left_it != left_es.end() && right_it != right.end(); left_it++) {
     while (right_it != right.end()
         && right_it->first < left_it->first + left_it->second)
       right_it++;
