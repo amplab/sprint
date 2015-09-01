@@ -131,5 +131,5 @@ running:
 Other parameters have the same meaning as the single-core benchmark.
 
 If you have any doubts or would like to report bugs, please contact us at 
-anuragk [at] berkeley.edu
-ragarwal [at] berkeley.edu
+* anuragk [at] berkeley.edu
+* ragarwal [at] berkeley.edu
