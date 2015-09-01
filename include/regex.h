@@ -13,6 +13,16 @@ class RegularExpression {
   typedef std::pair<size_t, size_t> OffsetLength;
   typedef std::set<OffsetLength> RegExResults;
   typedef RegExResults::iterator RegExResultsIterator;
+
+  struct offset_length_comparator {
+    bool operator()(const OffsetLength& lhs, const OffsetLength& rhs) {
+      return (lhs.first + lhs.second) < (rhs.first + rhs.second);
+    }
+  };
+
+  typedef std::set<OffsetLength, offset_length_comparator> RegExEndSortedSet;
+  typedef RegExEndSortedSet::iterator RegExEndSortedIterator;
+
   typedef enum {
     BlackBox = 0,
     PullStar = 1
@@ -31,7 +41,7 @@ class RegularExpression {
   void wildCard(RegExResults &left, RegExResults &right);
   void explainSubExpression(RegEx *re);
   void getSubexpressions();
-  
+
   bool isPrefixed(RegEx *re);
   bool isSuffixed(RegEx *re);
 

@@ -37,8 +37,10 @@ void pull_star::RegularExpression::execute() {
 void pull_star::RegularExpression::wildCard(RegExResults &left,
                                             RegExResults &right) {
   RegExResults wildcard_res;
-  RegExResultsIterator left_it, right_it;
-  for (left_it = left.begin(); left_it != left.end(); left_it++) {
+  RegExEndSortedSet left_es(left.begin(), left.end());
+  RegExResultsIterator right_it;
+  RegExEndSortedIterator left_it;
+  for (left_it = left_es.begin(); left_it != left_es.end(); left_it++) {
     OffsetLength search_candidate(left_it->first + left_it->second, 0);
     RegExResultsIterator first_entry = right.lower_bound(search_candidate);
     for (right_it = first_entry; right_it != right.end(); right_it++) {
