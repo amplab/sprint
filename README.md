@@ -1,6 +1,6 @@
-# Pull-Star
+# Swift
 
-Implementation for Black-Box and Pull-Star algorithms for Regular Expressions.
+Implementation for Black-Box and Swift optimizations for Regular Expressions.
 
 ## Supported Data Structures
 
@@ -11,7 +11,7 @@ We currently support the following data structures:
 3. Compressed Suffix Tree (CST)
 4. k-gram Index (kGM)
 
-We also support Pull-Star/Black Box Algorithms on CSA, but they are more closely
+We also support Swift optimizations/naive Black Box Algorithms on CSA, but they are more closely
 integrated with the data structures; the implementation can be found in the 
 [Succinct](https://github.com/amplab/succinct-cpp) repository (see the 
 [regex](https://github.com/amplab/succinct-cpp/tree/master/core/include/regex)
