@@ -13,9 +13,10 @@ We currently support the following data structures:
 
 We also support Swift optimizations/naive Black Box Algorithms on CSA, but they are more closely
 integrated with the data structures; the implementation can be found in the 
-[Succinct](https://github.com/amplab/succinct-cpp) repository (see the 
+Succinct's [C++](https://github.com/amplab/succinct-cpp) repository (see the 
 [regex](https://github.com/amplab/succinct-cpp/tree/master/core/include/regex)
-sub-module).
+sub-module). We also provide a distributed implementation for CSA on Spark, which
+can be found at the [Succinct-Spark](https://github.com/amplab/succinct) repository.
 
 ## Pre-requisites
 
