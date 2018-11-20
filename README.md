@@ -80,14 +80,14 @@ run:
 `mode` specifies whether the data structure should be constructed on `file` (1) 
 or should should be read from `file` (0).
 
-`query\_file` specifies the path to the file containing RegEx queries (see 
+`query_file` specifies the path to the file containing RegEx queries (see 
 [queries/](queries/) for sample queries).
 
-`res\_file` specifies the path to the output file for the results.
+`res_file` specifies the path to the output file for the results.
 
 `data-structure` specifies which index to use (same mapping as described above).
 
-`executor\_type` specifies whether Black-Box (0) or Pull-Star (1) approach 
+`executor_type` specifies whether Black-Box (0) or Pull-Star (1) approach 
 should be used.
 
 `benchmark` specifies the benchmark-type, and should be set to "regex-latency".
