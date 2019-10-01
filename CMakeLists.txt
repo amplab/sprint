@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(pull-star CXX)
+project(sprint CXX)
 
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
